@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "format": "prettier --write \"app/**/*.{ts,tsx}\" \"test/**/*.{ts,tsx}\""
+    "format": "prettier --write \"app/**/*.{ts,tsx}\" \"test/**/*.{ts,tsx}\" \"api/**/*.{ts,tsx,json}\"",
+    "generate-api": "npx openapi-typescript api/api-spec.json --o api/api-types.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -24,6 +25,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
+    "openapi-typescript": "^7.10.1",
     "prettier": "^3.7.4",
     "tailwindcss": "^4",
     "typescript": "^5"

@@ -1,0 +1,229 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["App"]
+      }
+    },
+    "/barbers": {
+      "get": {
+        "operationId": "BarbersController_getBarbers",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Barbers"]
+      },
+      "post": {
+        "operationId": "BarbersController_createBarber",
+        "parameters": [],
+        "responses": { "201": { "description": "" } },
+        "tags": ["Barbers"]
+      }
+    },
+    "/barbers/{id}": {
+      "get": {
+        "operationId": "BarbersController_getBarberDetails",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Barbers"]
+      },
+      "put": {
+        "operationId": "BarbersController_updateBarber",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Barbers"]
+      },
+      "delete": {
+        "operationId": "BarbersController_deleteBarber",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Barbers"]
+      }
+    },
+    "/booking": {
+      "get": {
+        "operationId": "BookingController_getBookings",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Booking"]
+      },
+      "post": {
+        "operationId": "BookingController_createBooking",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateBookingDto" }
+            }
+          }
+        },
+        "responses": { "201": { "description": "" } },
+        "tags": ["Booking"]
+      }
+    },
+    "/booking/{id}": {
+      "get": {
+        "operationId": "BookingController_getBookingDetails",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Booking"]
+      },
+      "patch": {
+        "operationId": "BookingController_updateBooking",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateBookingDto" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "" } },
+        "tags": ["Booking"]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" },
+                    "info": {
+                      "type": "object",
+                      "example": { "database": { "status": "up" } },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": { "status": { "type": "string" } },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": { "status": { "type": "string" } },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": { "database": { "status": "up" } },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": { "status": { "type": "string" } },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "error" },
+                    "info": {
+                      "type": "object",
+                      "example": { "database": { "status": "up" } },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": { "status": { "type": "string" } },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": { "status": { "type": "string" } },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": { "status": "up" },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect"
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": ["status"],
+                        "properties": { "status": { "type": "string" } },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Health"]
+      }
+    }
+  },
+  "info": {
+    "title": "Eric's Barber API",
+    "description": "Auth and Booking API for Barber Shop Application",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "CreateBookingDto": { "type": "object", "properties": {} },
+      "UpdateBookingDto": { "type": "object", "properties": {} }
+    }
+  }
+}
