@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write \"app/**/*.{ts,tsx}\" \"test/**/*.{ts,tsx}\" \"api/**/*.{ts,tsx,json}\"",
-    "generate-api": "npx openapi-typescript api/api-spec.json --o api/api-types.ts"
+    "generate:api-types": "npx openapi-typescript api/api-spec.json --o api/api-types.ts",
+    "generate:api-client": "npx openapi-typescript-codegen --input ./api/api-spec.json --output ./api/generated"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -27,6 +28,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "openapi-typescript": "^7.10.1",
+    "openapi-typescript-codegen": "^0.30.0",
     "prettier": "^3.7.4",
     "tailwindcss": "^4",
     "typescript": "^5"
