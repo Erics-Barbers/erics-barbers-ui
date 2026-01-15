@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run generate:api-client && next build",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write \"app/**/*.{ts,tsx}\" \"test/**/*.{ts,tsx}\" \"api/**/*.{ts,tsx,json}\"",
