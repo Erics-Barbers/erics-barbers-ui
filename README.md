@@ -1,26 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Barber's Booking and Auth UI
 
-## Technologies
+This project is a modern single-page application (SPA) for managing barber shop bookings and user authentication, built with the Next.js framework. It provides a seamless experience for users to register, log in, and book appointments, with a focus on clean UI/UX and robust authentication flows.
 
-- Next.js
-- Material UI Component Library
+---
+
+## Table of Contents
+- [Overview](#overview)
+- [Technologies Used](#technologies-used)
+- [Features](#features)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Overview
+This application allows users to:
+- Register and verify their email address
+- Log in using password, magic link, or OTP
+- Book, view, and manage appointments with barbers
+- Browse available barbers and services
+
+The UI is designed for clarity and ease of use, following the wireframe provided in `wireframe.excalidraw` (see [UI/UX Wireframe](#uiux-wireframe)).
+
+## Technologies Used
+- **Next.js** – React framework for server-side rendering and routing
+- **React.js** – Component-based UI library
+- **Material UI** – Component library for fast, accessible design
+- **Tailwind CSS** – Utility-first CSS framework for rapid styling
+
+## Features
+- **User Registration**: Sign up with email verification
+- **Authentication**: Login via password, magic link, or OTP
+- **Booking System**: Create, update, and manage appointments
+- **Barber & Service Listings**: View available barbers and services
+- **Responsive Design**: Mobile-friendly and accessible UI
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js (v18 or higher recommended)
+- npm or yarn
 
-```bash
+### Installation
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/your-username/erics-barbers-ui.git
+   cd erics-barbers-ui
+   ```
+2. Install dependencies:
+   ```sh
+   npm install
+   # or
+   yarn install
+   ```
+3. (Optional) Configure environment variables as needed.
+
+### Running the App
+Start the development server:
+```sh
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+The app will be available at [http://localhost:3000](http://localhost:3000).
+
+## Project Structure
+
+```
+├── api/                # API client, models, and services
+│   ├── generated/      # OpenAPI-generated client code
+│   └── repositories/   # Data access and repository logic
+├── app/                # Next.js app directory (pages, components, routes)
+│   ├── components/     # Shared UI components (navbar, footer, etc.)
+│   ├── booking/        # Booking-related pages
+│   ├── login/          # Login forms and pages
+│   ├── register/       # Registration forms and pages
+│   └── ...             # Other feature folders
+├── public/             # Static assets (if any)
+├── config.json         # App configuration
+├── README.md           # Project documentation
+└── ...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Usage
+- Register a new account and verify your email
+- Log in using your preferred method
+- Browse barbers and available services
+- Book, update, or cancel appointments
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## UI/UX Wireframe
+The `wireframe.excalidraw` file at the root of this project contains the UI/UX design. Open it at [excalidraw.com](https://excalidraw.com/) to view the application's wireframe.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Contributing
+Contributions are welcome! Please open issues or submit pull requests for improvements and bug fixes.
+
+## License
+This project is licensed under the MIT License.
