@@ -44,7 +44,7 @@ export default function Navbar() {
     <nav className="flex flex-row justify-between h-[10vh] bg-black pt-8 px-40 border-b-4 border-b-white items-center">
       <div className="flex flex-row justify-start pl-8">
         <span
-          className={`font-bold text-2xl text-primary ${kaushan.className}`}
+          className={`font-bold sm:text-2xl md:text-3xl lg:text-4xl text-primary tracking-tight ${kaushan.className}`}
         >
           <Link href="/">Eric&apos;s Barbers</Link>
         </span>

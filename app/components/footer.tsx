@@ -24,9 +24,6 @@ export default function Footer() {
         <Link href="/terms-of-service">
           <span className="text-sm">Terms of Service</span>
         </Link>
-        <Link href="/cookie-policy">
-          <span className="text-sm">Cookie Policy</span>
-        </Link>
       </div>
       <div className="flex flex-col">
         <div>
