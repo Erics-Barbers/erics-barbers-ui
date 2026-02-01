@@ -21,7 +21,9 @@
             }
           }
         },
-        "responses": { "201": { "description": "" } },
+        "responses": {
+          "201": { "description": "User registered successfully" }
+        },
         "tags": ["Auth"]
       }
     },
@@ -29,7 +31,19 @@
       "post": {
         "operationId": "AuthController_verifyEmail",
         "parameters": [],
-        "responses": { "201": { "description": "" } },
+        "responses": {
+          "200": { "description": "Email verified successfully" }
+        },
+        "tags": ["Auth"]
+      }
+    },
+    "/auth/send-verification-email": {
+      "post": {
+        "operationId": "AuthController_sendVerificationEmail",
+        "parameters": [],
+        "responses": {
+          "200": { "description": "Verification email sent successfully" }
+        },
         "tags": ["Auth"]
       }
     },
@@ -45,7 +59,9 @@
             }
           }
         },
-        "responses": { "201": { "description": "" } },
+        "responses": {
+          "200": { "description": "User logged in successfully" }
+        },
         "tags": ["Auth"]
       }
     },
@@ -53,13 +69,17 @@
       "get": {
         "operationId": "AuthController_getProfile",
         "parameters": [],
-        "responses": { "200": { "description": "" } },
+        "responses": {
+          "200": { "description": "User profile retrieved successfully" }
+        },
         "tags": ["Auth"]
       },
       "put": {
         "operationId": "AuthController_updateProfile",
         "parameters": [],
-        "responses": { "200": { "description": "" } },
+        "responses": {
+          "200": { "description": "User profile updated successfully" }
+        },
         "tags": ["Auth"]
       }
     },
@@ -75,7 +95,9 @@
             }
           }
         },
-        "responses": { "201": { "description": "" } },
+        "responses": {
+          "200": { "description": "User logged out successfully" }
+        },
         "tags": ["Auth"]
       }
     },
@@ -83,7 +105,11 @@
       "post": {
         "operationId": "AuthController_resetPasswordEmail",
         "parameters": [],
-        "responses": { "201": { "description": "" } },
+        "responses": {
+          "200": {
+            "description": "Password reset link sent to email if it exists"
+          }
+        },
         "tags": ["Auth"]
       }
     },
@@ -99,7 +125,9 @@
             }
           }
         },
-        "responses": { "201": { "description": "" } },
+        "responses": {
+          "200": { "description": "Password reset successfully" }
+        },
         "tags": ["Auth"]
       }
     },
@@ -115,7 +143,7 @@
             }
           }
         },
-        "responses": { "201": { "description": "" } },
+        "responses": { "200": { "description": "MFA enabled successfully" } },
         "tags": ["Auth"]
       }
     },
@@ -332,11 +360,86 @@
   "servers": [],
   "components": {
     "schemas": {
-      "RegisterDto": { "type": "object", "properties": {} },
-      "LoginDto": { "type": "object", "properties": {} },
-      "LogOutDto": { "type": "object", "properties": {} },
-      "ResetPasswordDto": { "type": "object", "properties": {} },
-      "MfaDto": { "type": "object", "properties": {} },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "example": "Password123",
+            "description": "Password must be 8-20 characters long, contain at least one letter and one number"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "example": "SecurePassword123",
+            "description": "User password (8-20 characters)"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "LogOutDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "some-refresh-token",
+            "description": "Refresh token for logging out"
+          },
+          "userId": {
+            "type": "string",
+            "example": "user-id-123",
+            "description": "User ID associated with the refresh token"
+          }
+        },
+        "required": ["refreshToken", "userId"]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com",
+            "description": "User email address"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "NewPassword123",
+            "description": "New password must be 8-20 characters long, contain at least one letter and one number"
+          }
+        },
+        "required": ["email", "newPassword"]
+      },
+      "MfaDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "user-id-123",
+            "description": "User ID for MFA verification"
+          },
+          "mfaCode": {
+            "type": "string",
+            "example": "123456",
+            "description": "MFA code for verification"
+          }
+        },
+        "required": ["userId", "mfaCode"]
+      },
       "CreateBookingDto": { "type": "object", "properties": {} },
       "UpdateBookingDto": { "type": "object", "properties": {} }
     }
