@@ -5,16 +5,19 @@ import RegisterForm from './form';
 import AuthRepository from '@/api/repositories/auth-repository';
 import React from 'react';
 import Notification from '@/app/components/notification';
+import { useRouter } from 'next/navigation';
 
 export default function Register() {
   const [submitting, setSubmitting] = React.useState(false);
-
+  const router = useRouter();
   const authRepository = new AuthRepository();
 
   const registerUser = async (email: string, password: string) => {
     setSubmitting(true);
     try {
       await authRepository.registerUser(email, password);
+      localStorage.setItem('userEmail', email);
+      router.push('/verify-email');
     } catch (error) {
       console.error('Registration failed:', error);
       generateSnackbar();
@@ -35,7 +38,7 @@ export default function Register() {
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-black">
+    <div className="flex flex-1 flex-col py-16 items-center bg-black">
       <h1 className="text-4xl font-bold mb-8">Register Your Account</h1>
       <RegisterForm submitting={submitting} onRegister={registerUser} />
       <span className="mt-4 text-gray-600">
@@ -44,6 +47,9 @@ export default function Register() {
           Login here
         </Link>
       </span>
+      <p>
+        By signing up, you agree to our Terms of Service and Privacy Policy.
+      </p>
     </div>
   );
 }

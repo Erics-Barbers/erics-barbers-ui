@@ -14,8 +14,16 @@ export default class AuthRepository {
     }
   }
 
-  public async verifyEmail() {
-    return await AuthService.authControllerVerifyEmail();
+  public async verifyEmail(token: string) {
+    return await AuthService.authControllerVerifyEmail({
+      token,
+    });
+  }
+
+  public async resendVerificationEmail(email: string) {
+    return await AuthService.authControllerSendVerificationEmail({
+      email,
+    });
   }
 
   public async loginUser(email: string, password: string) {
@@ -33,17 +41,22 @@ export default class AuthRepository {
     return await AuthService.authControllerUpdateProfile();
   }
 
-  public async logoutUser() {
-    return await AuthService.authControllerLogout({});
+  public async logoutUser(refreshToken: string, userId: string) {
+    return await AuthService.authControllerLogout({
+      refreshToken,
+      userId,
+    });
   }
 
-  public async resetPasswordEmail() {
-    return await AuthService.authControllerResetPasswordEmail();
+  public async resetPasswordEmail(email: string) {
+    return await AuthService.authControllerResetPasswordEmail({
+      email,
+    });
   }
 
-  public async resetPassword(token: string, newPassword: string) {
+  public async resetPassword(email: string, newPassword: string) {
     return await AuthService.authControllerResetPassword({
-      token,
+      email,
       newPassword,
     });
   }

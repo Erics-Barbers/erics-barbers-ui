@@ -21,7 +21,7 @@ export default function RegisterForm(props: RegisterFormProps) {
 
   return (
     <Form action="" onSubmit={handleSubmit}>
-      <div className="flex flex-col gap-4 mx-auto mt-10">
+      <div className="flex flex-col gap-6 mx-auto mt-10 pb-8">
         <TextField
           label="Email"
           type="email"
@@ -29,6 +29,13 @@ export default function RegisterForm(props: RegisterFormProps) {
           value={email}
           disabled={props.submitting}
           onChange={(e) => setEmail(e.target.value)}
+          InputProps={{
+            style: { backgroundColor: '#fff3cd', borderRadius: 12 },
+          }}
+          InputLabelProps={{
+            shrink: true,
+            style: { color: '#fff', position: 'static' },
+          }}
         />
         <TextField
           label="Password"
@@ -37,12 +44,20 @@ export default function RegisterForm(props: RegisterFormProps) {
           value={password}
           disabled={props.submitting}
           onChange={(e) => setPassword(e.target.value)}
+          InputProps={{
+            style: { backgroundColor: '#fff3cd', borderRadius: 12 },
+          }}
+          InputLabelProps={{
+            shrink: true,
+            style: { color: '#fff', position: 'static' },
+          }}
         />
         <Button
           type="submit"
           variant="contained"
           color="primary"
           disabled={props.submitting}
+          style={{ backgroundColor: '#fff', color: '#222', borderRadius: 12 }}
         >
           Register
         </Button>

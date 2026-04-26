@@ -31,6 +31,14 @@
       "post": {
         "operationId": "AuthController_verifyEmail",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VerifyEmailDto" }
+            }
+          }
+        },
         "responses": {
           "200": { "description": "Email verified successfully" }
         },
@@ -41,6 +49,14 @@
       "post": {
         "operationId": "AuthController_sendVerificationEmail",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SendVerificationDto" }
+            }
+          }
+        },
         "responses": {
           "200": { "description": "Verification email sent successfully" }
         },
@@ -105,6 +121,14 @@
       "post": {
         "operationId": "AuthController_resetPasswordEmail",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResetPasswordEmailDto" }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Password reset link sent to email if it exists"
@@ -353,11 +377,25 @@
   "info": {
     "title": "Eric's Barber API",
     "description": "Auth and Booking API for Barber Shop Application",
+    "license": {
+      "name": "MIT",
+      "url": "https://mit-license.org/"
+    },
+    "termsOfService": "https://erics-barbers-luton.co.uk/terms-of-service",
     "version": "1.0",
-    "contact": {}
+    "contact": {
+      "name": "Fahmid Haque",
+      "email": "fahmidulhaque97@pm.me",
+      "url": "https://www.linkedin.com/in/fahmid-h-b7a96b123/"
+    }
   },
   "tags": [],
-  "servers": [],
+  "servers": [
+    {
+      "url": "https://erics-barber-api.onrender.com",
+      "description": "Base URL for API"
+    }
+  ],
   "components": {
     "schemas": {
       "RegisterDto": {
@@ -375,6 +413,28 @@
           }
         },
         "required": ["email", "password"]
+      },
+      "VerifyEmailDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Verification token sent to the user email",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": ["token"]
+      },
+      "SendVerificationDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address to send the verification email to",
+            "example": "user@example.com"
+          }
+        },
+        "required": ["email"]
       },
       "LoginDto": {
         "type": "object",
@@ -407,6 +467,17 @@
           }
         },
         "required": ["refreshToken", "userId"]
+      },
+      "ResetPasswordEmailDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address to send the reset password email to",
+            "example": "user@example.com"
+          }
+        },
+        "required": ["email"]
       },
       "ResetPasswordDto": {
         "type": "object",

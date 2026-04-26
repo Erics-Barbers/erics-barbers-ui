@@ -47,12 +47,6 @@ export default function Footer() {
           </a>
           <span className="text-sm">WhatsApp</span>
         </div>
-        <div>
-          <a target="_blank" rel="noopener noreferrer" href="tel:1234567890">
-            <Phone />
-          </a>
-          <span className="text-sm">Phone</span>
-        </div>
       </div>
     </footer>
   );
