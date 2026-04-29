@@ -1,11 +1,12 @@
-'use client';
+
+"use client";
 
 import AuthRepository from '@/api/repositories/auth-repository';
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Link } from '@mui/material';
 
-export default function EmailVerify() {
+function EmailVerifyInner() {
   const [verifying, setVerifying] = React.useState(true);
   const [verified, setVerified] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -73,5 +74,13 @@ export default function EmailVerify() {
     <div className="flex flex-1 flex-col py-16 gap-y-4 items-center bg-black min-h-screen justify-center">
       {content}
     </div>
+  );
+}
+
+export default function EmailVerify() {
+  return (
+    <Suspense fallback={<div className="text-lg text-white">Loading...</div>}>
+      <EmailVerifyInner />
+    </Suspense>
   );
 }
