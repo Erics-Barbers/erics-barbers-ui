@@ -15,49 +15,89 @@ export default class AuthRepository {
   }
 
   public async verifyEmail(token: string) {
-    return await AuthService.authControllerVerifyEmail({
-      token,
-    });
+    try {
+      return await AuthService.authControllerVerifyEmail({
+        token,
+      });
+    } catch (error) {
+      console.log('Verify email error:', error);
+      throw error;
+    }
   }
 
   public async resendVerificationEmail(email: string) {
-    return await AuthService.authControllerSendVerificationEmail({
-      email,
-    });
+    try {
+      return await AuthService.authControllerSendVerificationEmail({
+        email,
+      });
+    } catch (error) {
+      console.log('Resend verification email error:', error);
+      throw error;
+    }
   }
 
   public async loginUser(email: string, password: string) {
-    return await AuthService.authControllerLogin({
-      email,
-      password,
-    });
+    try {
+      return await AuthService.authControllerLogin({
+        email,
+        password,
+      });
+    } catch (error) {
+      console.log('Login error:', error);
+      throw error;
+    }
   }
 
   public async getProfile() {
-    return await AuthService.authControllerGetProfile();
+    try {
+      return await AuthService.authControllerGetProfile();
+    } catch (error) {
+      console.log('Get profile error:', error);
+      throw error;
+    }
   }
 
   public async updateProfile() {
-    return await AuthService.authControllerUpdateProfile();
+    try {
+      return await AuthService.authControllerUpdateProfile();
+    } catch (error) {
+      console.log('Update profile error:', error);
+      throw error;
+    }
   }
 
   public async logoutUser(refreshToken: string, userId: string) {
-    return await AuthService.authControllerLogout({
-      refreshToken,
-      userId,
-    });
+    try {
+      return await AuthService.authControllerLogout({
+        refreshToken,
+        userId,
+      });
+    } catch (error) {
+      console.log('Logout error:', error);
+      throw error;
+    }
   }
 
   public async resetPasswordEmail(email: string) {
-    return await AuthService.authControllerResetPasswordEmail({
-      email,
-    });
+    try {
+      return await AuthService.authControllerResetPasswordEmail({
+        email,
+      });
+    } catch (error) {
+      console.log('Reset password email error:', error);
+      throw error;
+    }
   }
 
   public async resetPassword(email: string, newPassword: string) {
-    return await AuthService.authControllerResetPassword({
-      email,
-      newPassword,
-    });
+    try {
+      return await AuthService.authControllerResetPassword({
+        email,
+        newPassword,
+      });
+    } catch (error) {
+      console.log('Reset password error:', error);
+      throw error;
+    }
   }
 }

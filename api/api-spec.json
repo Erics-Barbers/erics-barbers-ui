@@ -27,24 +27,6 @@
         "tags": ["Auth"]
       }
     },
-    "/auth/verify-email": {
-      "post": {
-        "operationId": "AuthController_verifyEmail",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/VerifyEmailDto" }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Email verified successfully" }
-        },
-        "tags": ["Auth"]
-      }
-    },
     "/auth/send-verification-email": {
       "post": {
         "operationId": "AuthController_sendVerificationEmail",
@@ -63,6 +45,33 @@
         "tags": ["Auth"]
       }
     },
+    "/auth/verify-email": {
+      "post": {
+        "operationId": "AuthController_verifyEmail",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VerifyEmailRequestDto" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyEmailResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Auth"]
+      }
+    },
     "/auth/login": {
       "post": {
         "operationId": "AuthController_login",
@@ -71,12 +80,19 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/LoginDto" }
+              "schema": { "$ref": "#/components/schemas/LoginRequestDto" }
             }
           }
         },
         "responses": {
-          "200": { "description": "User logged in successfully" }
+          "200": {
+            "description": "User logged in successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponseDto" }
+              }
+            }
+          }
         },
         "tags": ["Auth"]
       }
@@ -168,6 +184,35 @@
           }
         },
         "responses": { "200": { "description": "MFA enabled successfully" } },
+        "tags": ["Auth"]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refreshTokens",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refresh tokens created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshTokenResponseDto"
+                }
+              }
+            }
+          }
+        },
         "tags": ["Auth"]
       }
     },
@@ -377,17 +422,13 @@
   "info": {
     "title": "Eric's Barber API",
     "description": "Auth and Booking API for Barber Shop Application",
-    "license": {
-      "name": "MIT",
-      "url": "https://mit-license.org/"
-    },
-    "termsOfService": "https://erics-barbers-luton.co.uk/terms-of-service",
     "version": "1.0",
     "contact": {
       "name": "Fahmid Haque",
-      "email": "fahmidulhaque97@pm.me",
-      "url": "https://www.linkedin.com/in/fahmid-h-b7a96b123/"
-    }
+      "url": "https://www.linkedin.com/in/fahmid-h-b7a96b123/",
+      "email": "fahmidulhaque97@pm.me"
+    },
+    "license": { "name": "MIT", "url": "https://mit-license.org/" }
   },
   "tags": [],
   "servers": [
@@ -408,22 +449,11 @@
           },
           "password": {
             "type": "string",
-            "example": "Password123",
-            "description": "Password must be 8-20 characters long, contain at least one letter and one number"
+            "example": "Password123!",
+            "description": "Password must be 8-20 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character"
           }
         },
         "required": ["email", "password"]
-      },
-      "VerifyEmailDto": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "description": "Verification token sent to the user email",
-            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-          }
-        },
-        "required": ["token"]
       },
       "SendVerificationDto": {
         "type": "object",
@@ -436,7 +466,35 @@
         },
         "required": ["email"]
       },
-      "LoginDto": {
+      "VerifyEmailRequestDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Verification token sent to the user email",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": ["token"]
+      },
+      "VerifyEmailResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "User logged in successfully"
+          },
+          "accessToken": {
+            "type": "string",
+            "example": {
+              "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            },
+            "description": "Access token"
+          }
+        },
+        "required": ["message", "accessToken"]
+      },
+      "LoginRequestDto": {
         "type": "object",
         "properties": {
           "email": {
@@ -446,11 +504,28 @@
           },
           "password": {
             "type": "string",
-            "example": "SecurePassword123",
-            "description": "User password (8-20 characters)"
+            "example": "Password123!",
+            "description": "Password must be 8-20 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character"
           }
         },
         "required": ["email", "password"]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "User logged in successfully"
+          },
+          "accessToken": {
+            "type": "string",
+            "example": {
+              "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            },
+            "description": "Access token"
+          }
+        },
+        "required": ["message", "accessToken"]
       },
       "LogOutDto": {
         "type": "object",
@@ -510,6 +585,34 @@
           }
         },
         "required": ["userId", "mfaCode"]
+      },
+      "RefreshTokenRequestDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "user-id-123",
+            "description": "User ID"
+          },
+          "email": {
+            "type": "string",
+            "example": "user@example.com",
+            "description": "User email address"
+          }
+        },
+        "required": ["userId", "email"]
+      },
+      "RefreshTokenResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "description": "Access token"
+          },
+          "message": { "type": "string", "description": "Success message" }
+        },
+        "required": ["accessToken", "message"]
       },
       "CreateBookingDto": { "type": "object", "properties": {} },
       "UpdateBookingDto": { "type": "object", "properties": {} }

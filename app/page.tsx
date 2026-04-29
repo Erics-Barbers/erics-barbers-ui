@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Divider } from '@mui/material';
 import { Kaushan_Script } from 'next/font/google';
 
 const kaushan = Kaushan_Script({

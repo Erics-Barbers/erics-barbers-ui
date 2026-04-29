@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation';
 
 export default function Register() {
   const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState('');
   const router = useRouter();
   const authRepository = new AuthRepository();
 
@@ -19,23 +21,12 @@ export default function Register() {
       localStorage.setItem('userEmail', email);
       router.push('/verify-email');
     } catch (error) {
+      setErrorMessage(error as string);
       console.error('Registration failed:', error);
-      generateSnackbar();
     } finally {
       setSubmitting(false);
     }
   };
-
-  function generateSnackbar() {
-    return (
-      <Notification
-        message="Registration failed. Please try again."
-        open={true}
-        type="error"
-        onClose={() => {}}
-      />
-    );
-  }
 
   return (
     <div className="flex flex-1 flex-col py-16 items-center bg-black">
@@ -50,6 +41,13 @@ export default function Register() {
       <p>
         By signing up, you agree to our Terms of Service and Privacy Policy.
       </p>
+
+      <Notification
+        message={`Registration failed: ${errorMessage}`}
+        open={error}
+        type="error"
+        onClose={() => {setError(false)}}
+      />
     </div>
   );
 }

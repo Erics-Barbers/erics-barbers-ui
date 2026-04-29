@@ -6,21 +6,41 @@ import {
 
 export class BookingRepository {
   public async getBookings() {
-    return await BookingService.bookingControllerGetBookings();
+    try {
+      return await BookingService.bookingControllerGetBookings();
+    } catch (error) {
+      console.log('Get bookings error:', error);
+      throw error;
+    }
   }
 
   public async getBookingDetails(bookingId: string) {
-    return await BookingService.bookingControllerGetBookingDetails(bookingId);
+    try {
+      return await BookingService.bookingControllerGetBookingDetails(bookingId);
+    } catch (error) {
+      console.log('Get booking details error:', error);
+      throw error;
+    }
   }
 
   public async createBooking(bookingData: CreateBookingDto) {
-    return await BookingService.bookingControllerCreateBooking(bookingData);
+    try {
+      return await BookingService.bookingControllerCreateBooking(bookingData);
+    } catch (error) {
+      console.log('Create booking error:', error);
+      throw error;
+    }
   }
 
   public async updateBooking(email: string, bookingData: UpdateBookingDto) {
-    return await BookingService.bookingControllerUpdateBooking(
-      email,
-      bookingData,
-    );
+    try {
+      return await BookingService.bookingControllerUpdateBooking(
+        email,
+        bookingData,
+      );
+    } catch (error) {
+      console.log('Update booking error:', error);
+      throw error;
+    }
   }
 }

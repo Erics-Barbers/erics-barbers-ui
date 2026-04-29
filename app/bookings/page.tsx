@@ -1,10 +1,23 @@
+
 import Link from "next/link";
 
+const isBookingEnabled = process.env.NEXT_PUBLIC_BOOKING_ENABLED === "true";
+
 export default function Bookings() {
+  if (!isBookingEnabled) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center min-h-screen bg-black py-16">
+        <div className="bg-[#181818] rounded-2xl shadow-lg p-10 max-w-xl w-full flex flex-col items-center">
+          <h1 className="text-3xl font-bold text-white mb-4">Bookings Coming Soon</h1>
+          <p className="text-white/80">The booking feature is currently in development. Please check back later!</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center min-h-screen bg-black py-16">
       <div className="flex flex-row bg-[#181818] rounded-2xl shadow-lg overflow-hidden divide-x-2 divide-white/20 w-full max-w-2xl">
-        {/* Left side: Create a new booking */}
         <div className="flex flex-col items-center justify-center flex-1 p-10 gap-6">
           <h1 className="text-3xl font-bold text-white mb-4">Create a new booking</h1>
           <Link
@@ -14,7 +27,6 @@ export default function Bookings() {
             Book
           </Link>
         </div>
-        {/* Right side: Manage an existing booking */}
         <div className="flex flex-col items-center justify-center flex-1 p-10 gap-6">
           <h1 className="text-3xl font-bold text-white mb-4">Manage an existing booking</h1>
           <Link

@@ -15,7 +15,6 @@ export default function RegisterForm(props: RegisterFormProps) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     props.onRegister(email, password);
   };
 
@@ -56,7 +55,7 @@ export default function RegisterForm(props: RegisterFormProps) {
           type="submit"
           variant="contained"
           color="primary"
-          disabled={props.submitting}
+          loading={props.submitting}
           style={{ backgroundColor: '#fff', color: '#222', borderRadius: 12 }}
         >
           Register
