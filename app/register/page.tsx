@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import RegisterForm from './form';
-import AuthRepository from '@/api/repositories/auth-repository';
 import React from 'react';
 import Notification from '@/app/components/notification';
 import { useRouter } from 'next/navigation';
@@ -12,16 +11,27 @@ export default function Register() {
   const [error, setError] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState('');
   const router = useRouter();
-  const authRepository = new AuthRepository();
 
   const registerUser = async (email: string, password: string) => {
     setSubmitting(true);
     try {
-      await authRepository.registerUser(email, password);
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message ?? 'Registration failed.');
+      }
+
       localStorage.setItem('userEmail', email);
       router.push('/verify-email');
-    } catch (error) {
-      setErrorMessage(error as string);
+    } catch (error: unknown) {
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Registration failed.',
+      );
       setError(true);
     } finally {
       setSubmitting(false);

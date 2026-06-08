@@ -1,6 +1,5 @@
 'use client';
 
-import AuthRepository from '@/api/repositories/auth-repository';
 import { Button } from '@mui/material';
 import React from 'react';
 
@@ -9,7 +8,6 @@ export default function VerifyEmail() {
   const [timer, setTimer] = React.useState(RESEND_INTERVAL);
   const [email, setEmail] = React.useState('');
   const [isRunning, setIsRunning] = React.useState(true);
-  const authRepository = new AuthRepository();
 
   React.useEffect(() => {
     const storedEmail = localStorage.getItem('userEmail');
@@ -19,8 +17,19 @@ export default function VerifyEmail() {
   }, []);
 
   const resendVerificationEmail = async () => {
+    if (!email) return;
+
     try {
-      await authRepository.resendVerificationEmail(email);
+      const res = await fetch('/api/auth/send-verification-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Resend failed with status ${res.status}`);
+      }
+
       setTimer(RESEND_INTERVAL);
       setIsRunning(true);
     } catch (error) {
