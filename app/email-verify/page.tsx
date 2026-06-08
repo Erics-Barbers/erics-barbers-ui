@@ -1,6 +1,5 @@
 'use client';
 
-import AuthRepository from '@/api/repositories/auth-repository';
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Link } from '@mui/material';
@@ -18,9 +17,19 @@ function EmailVerifyInner() {
       setVerifying(false);
       return;
     }
-    const authRepository = new AuthRepository();
+
     try {
-      await authRepository.verifyEmail(token);
+      const res = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message ?? 'Email verification failed.');
+      }
+
       setVerified(true);
     } catch (error: unknown) {
       setError(
