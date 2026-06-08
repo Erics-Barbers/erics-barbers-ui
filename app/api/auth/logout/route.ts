@@ -29,7 +29,7 @@ export async function POST() {
     httpOnly: true,
     secure,
     sameSite: 'lax',
-    path: '/api/auth',
+    path: '/',
     maxAge: 0,
   });
 

@@ -68,10 +68,7 @@ export default class AuthRepository {
 
   public async logoutUser(refreshToken: string, userId: string) {
     try {
-      return await AuthService.authControllerLogout({
-        refreshToken,
-        userId,
-      });
+      return await AuthService.authControllerLogout();
     } catch (error) {
       console.log('Logout error:', error);
       throw error;
