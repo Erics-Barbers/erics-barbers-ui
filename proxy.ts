@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function decodeJwtPayload(token: string): any | null {
+type JwtPayload = {
+  exp?: number;
+};
+
+function decodeJwtPayload(token: string): JwtPayload | null {
   try {
     const [, payload] = token.split('.');
     if (!payload) return null;
@@ -13,29 +16,71 @@ function decodeJwtPayload(token: string): any | null {
   }
 }
 
+function getAccessToken(request: NextRequest): string | undefined {
+  return request.cookies.get('accessToken')?.value;
+}
+
+function createRedirectUrl(
+  request: NextRequest,
+  targetPath: string,
+  nextPath?: string
+) {
+  const url = request.nextUrl.clone();
+  url.pathname = targetPath;
+
+  if (nextPath) {
+    url.searchParams.set('next', nextPath);
+  } else {
+    url.searchParams.delete('next');
+  }
+
+  return url;
+}
+
+function isExpired(exp?: number): boolean {
+  if (!exp) return true;
+  return exp * 1000 <= Date.now();
+}
+
+function redirectTo(
+  request: NextRequest,
+  targetPath: string,
+  nextPath?: string
+): NextResponse {
+  return NextResponse.redirect(createRedirectUrl(request, targetPath, nextPath));
+}
+
+function redirectToAndClearToken(
+  request: NextRequest,
+  targetPath: string,
+  nextPath?: string
+): NextResponse {
+  const res = redirectTo(request, targetPath, nextPath);
+  res.cookies.set('accessToken', '', { path: '/', maxAge: 0 });
+  return res;
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  if (pathname.startsWith('/login')) {
+    const token = getAccessToken(request);
+
+    if (token) {
+      return redirectTo(request, '/my-account', pathname);
+    }
+  }
+
   if (pathname.startsWith('/my-account')) {
-    const token = request.cookies.get('accessToken')?.value;
+    const token = getAccessToken(request);
 
     if (!token) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/login';
-      url.searchParams.set('next', pathname);
-      return NextResponse.redirect(url);
+      return redirectTo(request, '/login', pathname);
     }
 
     const payload = decodeJwtPayload(token);
-    const exp = payload?.exp;
-
-    if (!exp || exp * 1000 <= Date.now()) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/login';
-      url.searchParams.set('next', request.nextUrl.pathname);
-      const res = NextResponse.redirect(url);
-      res.cookies.set('accessToken', '', { path: '/', maxAge: 0 });
-      return res;
+    if (isExpired(payload?.exp)) {
+      return redirectToAndClearToken(request, '/login', request.nextUrl.pathname);
     }
   }
 
@@ -43,5 +88,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/my-account/:path*'],
+  matcher: ['/my-account/:path*', '/login'],
 };

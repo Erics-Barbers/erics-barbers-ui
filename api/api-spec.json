@@ -119,14 +119,6 @@
       "post": {
         "operationId": "AuthController_logout",
         "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/LogOutDto" }
-            }
-          }
-        },
         "responses": {
           "200": { "description": "User logged out successfully" }
         },
@@ -519,29 +511,16 @@
           },
           "accessToken": {
             "type": "string",
-            "example": {
-              "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-            },
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
             "description": "Access token"
-          }
-        },
-        "required": ["message", "accessToken"]
-      },
-      "LogOutDto": {
-        "type": "object",
-        "properties": {
+          },
           "refreshToken": {
             "type": "string",
-            "example": "some-refresh-token",
-            "description": "Refresh token for logging out"
-          },
-          "userId": {
-            "type": "string",
-            "example": "user-id-123",
-            "description": "User ID associated with the refresh token"
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "description": "Refresh token. Intended for trusted server-side clients such as the Next.js BFF to set as an HttpOnly browser cookie."
           }
         },
-        "required": ["refreshToken", "userId"]
+        "required": ["message", "accessToken", "refreshToken"]
       },
       "ResetPasswordEmailDto": {
         "type": "object",
