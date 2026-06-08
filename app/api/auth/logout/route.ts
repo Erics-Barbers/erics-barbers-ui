@@ -4,17 +4,16 @@ import { cookies } from 'next/headers';
 export async function POST() {
   const cookieStore = await cookies();
   const secure = process.env.NODE_ENV === 'production';
+  const refreshToken = cookieStore.get('refreshToken')?.value;
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const apiRes = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout`,
-    {
+  if (refreshToken && apiBaseUrl) {
+    await fetch(`${apiBaseUrl}/auth/logout`, {
       method: 'POST',
-    },
-  );
-
-  if (!apiRes.ok) {
-    const err = await apiRes.json().catch(() => ({}));
-    return NextResponse.json(err, { status: apiRes.status });
+      headers: {
+        Cookie: `refreshToken=${refreshToken}`,
+      },
+    }).catch(() => null);
   }
 
   cookieStore.set('accessToken', '', {
