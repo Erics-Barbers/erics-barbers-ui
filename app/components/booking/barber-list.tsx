@@ -1,1 +1,1 @@
-export default function BarberList(){}
+export default function BarberList() {}

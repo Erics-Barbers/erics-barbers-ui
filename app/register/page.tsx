@@ -22,7 +22,7 @@ export default function Register() {
       router.push('/verify-email');
     } catch (error) {
       setErrorMessage(error as string);
-      console.error('Registration failed:', error);
+      setError(true);
     } finally {
       setSubmitting(false);
     }
@@ -46,7 +46,9 @@ export default function Register() {
         message={`Registration failed: ${errorMessage}`}
         open={error}
         type="error"
-        onClose={() => {setError(false)}}
+        onClose={() => {
+          setError(false);
+        }}
       />
     </div>
   );

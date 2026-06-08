@@ -4,22 +4,32 @@ import Link from 'next/link';
 import LoginForm from './form';
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import AuthRepository from '@/api/repositories/auth-repository';
 import Notification from '@/app/components/notification';
 
 export default function Login() {
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState(false);
   const router = useRouter();
-  const authRepository = new AuthRepository();
 
   const loginUser = async (email: string, password: string) => {
     setSubmitting(true);
+    setError(false);
+
     try {
-      await authRepository.loginUser(email, password);
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!res.ok) {
+        await res.json().catch(() => null);
+        throw new Error(`Login failed with status ${res.status}`);
+      }
+
       router.push('/my-account');
-    } catch (error) {
-      console.error('Login failed:', error);
+    } catch (e) {
+      console.error('Login failed:', e);
       setError(true);
     } finally {
       setSubmitting(false);
@@ -41,7 +51,9 @@ export default function Login() {
         message="Login failed. Please try again."
         open={error}
         type="error"
-        onClose={() => {setError(false)}}
+        onClose={() => {
+          setError(false);
+        }}
       />
     </div>
   );

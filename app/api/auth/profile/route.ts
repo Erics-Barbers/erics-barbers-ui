@@ -8,13 +8,19 @@ export async function GET() {
     return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
   }
 
-  const apiRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/profile`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const apiRes = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/profile`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
 
   if (apiRes.status === 401 || apiRes.status === 403) {
-    const res = NextResponse.json({ message: "Session expired" }, { status: 401 });
-    res.cookies.set("accessToken", "", { path: "/", maxAge: 0 });
+    const res = NextResponse.json(
+      { message: 'Session expired' },
+      { status: 401 },
+    );
+    res.cookies.set('accessToken', '', { path: '/', maxAge: 0 });
     return res;
   }
 

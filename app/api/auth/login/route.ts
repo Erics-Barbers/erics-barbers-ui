@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { LoginResponseDto } from '@/api/generated';
 
 export async function POST(req: Request) {
   const body = await req.json();
+  const cookieStore = await cookies();
+  const secure = process.env.NODE_ENV === 'production';
 
   const apiRes = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`,
@@ -18,15 +21,22 @@ export async function POST(req: Request) {
     return NextResponse.json(err, { status: apiRes.status });
   }
 
-  const data = await apiRes.json();
+  const data = (await apiRes.json()) as LoginResponseDto;
 
-  // Store access token on the UI domain (HttpOnly)
-  (await cookies()).set('accessToken', data.accessToken, {
+  cookieStore.set('accessToken', data.accessToken, {
     httpOnly: true,
-    secure: true,
+    secure,
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 15,
+  });
+
+  cookieStore.set('refreshToken', data.refreshToken, {
+    httpOnly: true,
+    secure,
+    sameSite: 'lax',
+    path: '/api/auth',
+    maxAge: 60 * 60 * 24 * 7,
   });
 
   return NextResponse.json({ message: 'Logged in' }, { status: 200 });

@@ -1,5 +1,4 @@
-
-"use client";
+'use client';
 
 import AuthRepository from '@/api/repositories/auth-repository';
 import React, { Suspense } from 'react';
@@ -38,14 +37,17 @@ function EmailVerifyInner() {
 
   let content;
   if (verifying) {
-    content = (
-      <div className="text-lg text-white">Verifying your email...</div>
-    );
+    content = <div className="text-lg text-white">Verifying your email...</div>;
   } else if (verified) {
     content = (
       <>
-        <h1 className="text-4xl font-bold mb-8 text-white">Your email has been verified successfully!</h1>
-        <p className="text-lg text-white mb-6">Setup your mobile number for OTP access and mobile notifications or go ahead and make a booking</p>
+        <h1 className="text-4xl font-bold mb-8 text-white">
+          Your email has been verified successfully!
+        </h1>
+        <p className="text-lg text-white mb-6">
+          Setup your mobile number for OTP access and mobile notifications or go
+          ahead and make a booking
+        </p>
         <div className="flex flex-col gap-4 w-full max-w-xs">
           <Link
             className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-black font-semibold px-5 transition-colors hover:bg-[#383838] hover:text-white dark:hover:bg-[#ccc] md:w-39.5"
