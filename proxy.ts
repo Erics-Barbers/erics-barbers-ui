@@ -8,6 +8,11 @@ type JwtPayload = {
   tokenType?: string;
 };
 
+type RefreshResult = {
+  accessToken: string;
+  refreshToken: string;
+};
+
 function decodeJwtPayload(token: string): JwtPayload | null {
   try {
     const [, payload] = token.split('.');
@@ -81,7 +86,7 @@ function redirectToAndClearTokens(
 
 async function refreshAccessToken(
   request: NextRequest,
-): Promise<string | null> {
+): Promise<RefreshResult | null> {
   const refreshToken = getRefreshToken(request);
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -102,15 +107,21 @@ async function refreshAccessToken(
 
   const data = (await apiRes.json().catch(() => null)) as {
     accessToken?: string;
+    refreshToken?: string;
   } | null;
 
-  return data?.accessToken ?? null;
+  if (!data?.accessToken || !data.refreshToken) {
+    return null;
+  }
+
+  return {
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
+  };
 }
 
-function continueWithAccessToken(accessToken: string): NextResponse {
-  const res = NextResponse.next();
-
-  res.cookies.set('accessToken', accessToken, {
+function setAuthCookies(res: NextResponse, tokens: RefreshResult) {
+  res.cookies.set('accessToken', tokens.accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -118,25 +129,29 @@ function continueWithAccessToken(accessToken: string): NextResponse {
     maxAge: 60 * 15,
   });
 
+  res.cookies.set('refreshToken', tokens.refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+  });
+}
+
+function continueWithTokens(tokens: RefreshResult): NextResponse {
+  const res = NextResponse.next();
+  setAuthCookies(res, tokens);
   return res;
 }
 
-function redirectWithAccessToken(
+function redirectWithTokens(
   request: NextRequest,
   targetPath: string,
   nextPath: string | undefined,
-  accessToken: string,
+  tokens: RefreshResult,
 ): NextResponse {
   const res = redirectTo(request, targetPath, nextPath);
-
-  res.cookies.set('accessToken', accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 15,
-  });
-
+  setAuthCookies(res, tokens);
   return res;
 }
 
@@ -147,15 +162,10 @@ export async function proxy(request: NextRequest) {
     const token = getAccessToken(request);
 
     if (!token) {
-      const accessToken = await refreshAccessToken(request);
+      const tokens = await refreshAccessToken(request);
 
-      if (accessToken) {
-        return redirectWithAccessToken(
-          request,
-          '/my-account',
-          pathname,
-          accessToken,
-        );
+      if (tokens) {
+        return redirectWithTokens(request, '/my-account', pathname, tokens);
       }
 
       return NextResponse.next();
@@ -167,14 +177,9 @@ export async function proxy(request: NextRequest) {
       return redirectTo(request, '/my-account', pathname);
     }
 
-    const accessToken = await refreshAccessToken(request);
-    if (accessToken) {
-      return redirectWithAccessToken(
-        request,
-        '/my-account',
-        pathname,
-        accessToken,
-      );
+    const tokens = await refreshAccessToken(request);
+    if (tokens) {
+      return redirectWithTokens(request, '/my-account', pathname, tokens);
     }
 
     return clearAuthCookies(NextResponse.next());
@@ -184,10 +189,10 @@ export async function proxy(request: NextRequest) {
     const token = getAccessToken(request);
 
     if (!token) {
-      const accessToken = await refreshAccessToken(request);
+      const tokens = await refreshAccessToken(request);
 
-      if (accessToken) {
-        return continueWithAccessToken(accessToken);
+      if (tokens) {
+        return continueWithTokens(tokens);
       }
 
       return redirectToAndClearTokens(request, '/login', pathname);
@@ -195,10 +200,10 @@ export async function proxy(request: NextRequest) {
 
     const payload = decodeJwtPayload(token);
     if (isExpired(payload?.exp)) {
-      const accessToken = await refreshAccessToken(request);
+      const tokens = await refreshAccessToken(request);
 
-      if (accessToken) {
-        return continueWithAccessToken(accessToken);
+      if (tokens) {
+        return continueWithTokens(tokens);
       }
 
       return redirectToAndClearTokens(
