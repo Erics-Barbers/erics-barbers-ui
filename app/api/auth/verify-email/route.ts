@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { rejectCrossSiteRequest } from '../_utils/reject-cross-site-request';
 
 type VerifyEmailResponse = {
   accessToken: string;
@@ -7,6 +8,9 @@ type VerifyEmailResponse = {
 };
 
 export async function POST(req: Request) {
+  const crossSiteResponse = rejectCrossSiteRequest(req);
+  if (crossSiteResponse) return crossSiteResponse;
+
   const body = await req.json();
   const cookieStore = await cookies();
   const secure = process.env.NODE_ENV === 'production';
