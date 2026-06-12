@@ -13,6 +13,27 @@ type RefreshResult = {
   refreshToken: string;
 };
 
+const protectedRoutePrefixes = [
+  '/my-account',
+  '/bookings',
+  '/admin',
+  '/barber',
+  '/dashboard',
+  '/account',
+  '/profile',
+  '/settings',
+] as const;
+
+function pathStartsWithPrefix(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+function isProtectedRoute(pathname: string): boolean {
+  return protectedRoutePrefixes.some((prefix) =>
+    pathStartsWithPrefix(pathname, prefix),
+  );
+}
+
 function decodeJwtPayload(token: string): JwtPayload | null {
   try {
     const [, payload] = token.split('.');
@@ -185,7 +206,7 @@ export async function proxy(request: NextRequest) {
     return clearAuthCookies(NextResponse.next());
   }
 
-  if (pathname.startsWith('/my-account')) {
+  if (isProtectedRoute(pathname)) {
     const token = getAccessToken(request);
 
     if (!token) {
@@ -218,5 +239,15 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/my-account/:path*', '/login'],
+  matcher: [
+    '/my-account/:path*',
+    '/bookings/:path*',
+    '/admin/:path*',
+    '/barber/:path*',
+    '/dashboard/:path*',
+    '/account/:path*',
+    '/profile/:path*',
+    '/settings/:path*',
+    '/login',
+  ],
 };

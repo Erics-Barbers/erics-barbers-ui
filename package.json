@@ -7,6 +7,7 @@
     "build": "npm run generate:api-client && next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "jest",
     "format": "prettier --write \"app/**/*.{ts,tsx}\" \"test/**/*.{ts,tsx}\" \"api/**/*.{ts,tsx,json}\"",
     "generate:api-client": "npx openapi-typescript-codegen --input ./api/api-spec.json --output ./api/generated"
   },
@@ -21,15 +22,19 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jest": "^29.5.14",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
+    "jest": "^29.7.0",
+    "jest-environment-node": "^29.7.0",
     "openapi-typescript": "^7.10.1",
     "openapi-typescript-codegen": "^0.30.0",
     "prettier": "^3.7.4",
     "tailwindcss": "^4",
+    "ts-jest": "^29.2.5",
     "typescript": "^5"
   }
 }

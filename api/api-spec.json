@@ -536,10 +536,10 @@
       "ResetPasswordDto": {
         "type": "object",
         "properties": {
-          "email": {
+          "token": {
             "type": "string",
-            "example": "user@example.com",
-            "description": "User email address"
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "description": "Password reset token sent to the user email"
           },
           "newPassword": {
             "type": "string",
@@ -547,7 +547,7 @@
             "description": "New password must be 8-20 characters long, contain at least one letter and one number"
           }
         },
-        "required": ["email", "newPassword"]
+        "required": ["token", "newPassword"]
       },
       "MfaDto": {
         "type": "object",
