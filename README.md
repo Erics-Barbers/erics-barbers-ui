@@ -19,7 +19,7 @@ This project is a modern single-page application (SPA) for managing barber shop 
 ## Overview
 This application allows users to:
 - Register and verify their email address
-- Log in using password, magic link, or OTP
+- Log in using email and password
 - Book, view, and manage appointments with barbers
 - Browse available barbers and services
 
@@ -33,7 +33,7 @@ The UI is designed for clarity and ease of use, following the wireframe provided
 
 ## Features
 - **User Registration**: Sign up with email verification
-- **Authentication**: Login via password, magic link, or OTP
+- **Authentication**: Login via email/password with HttpOnly cookie sessions managed by Next.js route handlers
 - **Booking System**: Create, update, and manage appointments
 - **Barber & Service Listings**: View available barbers and services
 - **Responsive Design**: Mobile-friendly and accessible UI
@@ -87,9 +87,12 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 
 ## Usage
 - Register a new account and verify your email
-- Log in using your preferred method
+- Log in using your email and password
 - Browse barbers and available services
 - Book, update, or cancel appointments
+
+## Authentication Notes
+See [docs/authentication.md](docs/authentication.md) for the current BFF auth flow, protected route proxy behavior, cookie handling, generated client guidance, and auth tests.
 
 ## UI/UX Wireframe
 The `wireframe.excalidraw` file at the root of this project contains the UI/UX design. Open it at [excalidraw.com](https://excalidraw.com/) to view the application's wireframe.
