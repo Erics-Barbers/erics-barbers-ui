@@ -6,6 +6,10 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Notification from '@/app/components/notification';
 
+type LoginErrorResponse = {
+  code?: string;
+};
+
 export default function Login() {
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState(false);
@@ -23,7 +27,16 @@ export default function Login() {
       });
 
       if (!res.ok) {
-        await res.json().catch(() => null);
+        const data = (await res.json().catch(() => null)) as
+          | LoginErrorResponse
+          | null;
+
+        if (data?.code === 'EMAIL_NOT_VERIFIED') {
+          localStorage.setItem('userEmail', email);
+          router.push('/verify-email');
+          return;
+        }
+
         throw new Error(`Login failed with status ${res.status}`);
       }
 

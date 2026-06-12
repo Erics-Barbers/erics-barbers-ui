@@ -3,6 +3,16 @@ import { cookies } from 'next/headers';
 import { LoginResponseDto } from '@/api/generated';
 import { rejectCrossSiteRequest } from '../_utils/reject-cross-site-request';
 
+type AuthErrorResponse = {
+  message?: string | string[];
+};
+
+function isEmailNotVerified(error: AuthErrorResponse): boolean {
+  return Array.isArray(error.message)
+    ? error.message.includes('Email not verified')
+    : error.message === 'Email not verified';
+}
+
 export async function POST(req: Request) {
   const crossSiteResponse = rejectCrossSiteRequest(req);
   if (crossSiteResponse) return crossSiteResponse;
@@ -21,7 +31,14 @@ export async function POST(req: Request) {
   );
 
   if (!apiRes.ok) {
-    const err = await apiRes.json().catch(() => ({}));
+    const err = (await apiRes.json().catch(() => ({}))) as AuthErrorResponse;
+    if (isEmailNotVerified(err)) {
+      return NextResponse.json(
+        { message: 'Email not verified', code: 'EMAIL_NOT_VERIFIED' },
+        { status: 403 },
+      );
+    }
+
     return NextResponse.json(err, { status: apiRes.status });
   }
 
