@@ -61,6 +61,8 @@ The browser posts to `POST /api/auth/logout`.
 
 The route handler forwards the refresh token to NestJS when available, but local logout is best-effort and always clears both browser cookies. This means logout still works when the access token is expired or the API returns `401`.
 
+The account page redirects to the homepage after a logout click regardless of the backend logout result. Backend logout is also idempotent, so missing or already-invalid refresh tokens still produce a successful API logout response.
+
 ## Protected Routes
 
 The proxy protects these route prefixes:
