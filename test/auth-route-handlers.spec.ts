@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { POST as login } from '../app/api/auth/login/route';
 import { POST as logout } from '../app/api/auth/logout/route';
 import { GET as profile } from '../app/api/auth/profile/route';
+import { POST as verifyMfa } from '../app/api/auth/verify-mfa/route';
 import { rejectCrossSiteRequest } from '../app/api/auth/_utils/reject-cross-site-request';
 
 jest.mock('next/headers', () => ({
@@ -61,7 +62,9 @@ describe('auth route handlers', () => {
     mockedCookies.mockResolvedValue(cookieStore as never);
 
     mockedFetch
-      .mockResolvedValueOnce(jsonResponse({ message: 'expired' }, { status: 401 }))
+      .mockResolvedValueOnce(
+        jsonResponse({ message: 'expired' }, { status: 401 }),
+      )
       .mockResolvedValueOnce(
         jsonResponse({
           accessToken: 'new-access-token',
@@ -117,8 +120,12 @@ describe('auth route handlers', () => {
     mockedCookies.mockResolvedValue(cookieStore as never);
 
     mockedFetch
-      .mockResolvedValueOnce(jsonResponse({ message: 'expired' }, { status: 401 }))
-      .mockResolvedValueOnce(jsonResponse({ message: 'invalid' }, { status: 401 }));
+      .mockResolvedValueOnce(
+        jsonResponse({ message: 'expired' }, { status: 401 }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ message: 'invalid' }, { status: 401 }),
+      );
 
     const res = await profile(
       new Request('https://ui.example.test/api/auth/profile'),
@@ -138,7 +145,9 @@ describe('auth route handlers', () => {
       refreshToken: 'refresh-token',
     });
     mockedCookies.mockResolvedValue(cookieStore as never);
-    mockedFetch.mockResolvedValue(jsonResponse({ message: 'unauthorized' }, { status: 401 }));
+    mockedFetch.mockResolvedValue(
+      jsonResponse({ message: 'unauthorized' }, { status: 401 }),
+    );
 
     const res = await logout(
       new Request('https://ui.example.test/api/auth/logout', {
@@ -186,6 +195,82 @@ describe('auth route handlers', () => {
       message: 'Email not verified',
       code: 'EMAIL_NOT_VERIFIED',
     });
+  });
+
+  it('returns MFA_REQUIRED without setting cookies when login requires MFA', async () => {
+    const cookieStore = createCookieStore();
+    mockedCookies.mockResolvedValue(cookieStore as never);
+    mockedFetch.mockResolvedValue(
+      jsonResponse({
+        message: 'MFA required',
+        code: 'MFA_REQUIRED',
+        mfaRequired: true,
+        challengeId: 'challenge-id',
+        mfaMethod: 'EMAIL',
+      }),
+    );
+
+    const res = await login(
+      new Request('https://ui.example.test/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: 'https://ui.example.test',
+        },
+        body: JSON.stringify({
+          email: 'mfa@example.com',
+          password: 'Password1',
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      message: 'MFA required',
+      code: 'MFA_REQUIRED',
+      mfaRequired: true,
+      challengeId: 'challenge-id',
+      mfaMethod: 'EMAIL',
+    });
+    expect(cookieStore.set).not.toHaveBeenCalled();
+  });
+
+  it('sets auth cookies after MFA verification succeeds', async () => {
+    const cookieStore = createCookieStore();
+    mockedCookies.mockResolvedValue(cookieStore as never);
+    mockedFetch.mockResolvedValue(
+      jsonResponse({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      }),
+    );
+
+    const res = await verifyMfa(
+      new Request('https://ui.example.test/api/auth/verify-mfa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: 'https://ui.example.test',
+        },
+        body: JSON.stringify({
+          challengeId: 'challenge-id',
+          code: '123456',
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ message: 'Logged in' });
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      'accessToken',
+      'access-token',
+      expect.objectContaining({ maxAge: 60 * 15 }),
+    );
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      'refreshToken',
+      'refresh-token',
+      expect.objectContaining({ maxAge: 60 * 60 * 24 * 7 }),
+    );
   });
 
   it('rejects cross-site auth requests', async () => {

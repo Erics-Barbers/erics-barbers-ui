@@ -41,6 +41,16 @@ The browser posts to:
 
 The Next.js route handler forwards the request to NestJS, receives `accessToken` and `refreshToken`, sets HttpOnly cookies, and returns a small success response to the browser.
 
+If login returns `code: MFA_REQUIRED`, the route handler does not set auth cookies. The login page asks for the email code and then posts to `POST /api/auth/verify-mfa`. Only successful MFA verification sets the `accessToken` and `refreshToken` cookies.
+
+External provider buttons should remain hidden unless:
+
+```text
+NEXT_PUBLIC_AUTH_EXTERNAL_PROVIDERS_ENABLED=true
+```
+
+No external provider login flow is implemented yet.
+
 ## Refresh
 
 When the access token is missing or expired, server-side UI auth code can use the refresh cookie to call NestJS `POST /auth/refresh`.
@@ -82,7 +92,9 @@ If a future private page is added, add its prefix to `protectedRoutePrefixes` an
 
 The generated API client can be useful for non-auth backend resources, but auth browser flows should keep using the BFF route handlers.
 
-For auth, explicit server-side `fetch()` calls are preferred because the BFF has to control cookies, retries, redirects, and local logout behavior.
+For auth, generated DTO/model types can be imported where useful, but generated `AuthService` methods should not be used by browser auth flows. Explicit server-side `fetch()` calls are preferred because the BFF has to control cookies, retries, redirects, and local logout behavior.
+
+This is enforced with an ESLint `no-restricted-imports` rule that blocks generated `AuthService` imports from app, proxy, test, and repository code while still allowing generated DTO type imports.
 
 ## Tests
 

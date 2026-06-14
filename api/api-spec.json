@@ -89,7 +89,14 @@
             "description": "User logged in successfully",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/LoginResponseDto" }
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/LoginResponseDto" },
+                    {
+                      "$ref": "#/components/schemas/LoginMfaRequiredResponseDto"
+                    }
+                  ]
+                }
               }
             }
           }
@@ -175,7 +182,25 @@
             }
           }
         },
-        "responses": { "200": { "description": "MFA enabled successfully" } },
+        "responses": { "200": { "description": "MFA verified successfully" } },
+        "tags": ["Auth"]
+      }
+    },
+    "/auth/mfa-preference": {
+      "put": {
+        "operationId": "AuthController_updateMfaPreference",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MfaPreferenceDto" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "MFA preference updated successfully" }
+        },
         "tags": ["Auth"]
       }
     },
@@ -522,6 +547,40 @@
         },
         "required": ["message", "accessToken", "refreshToken"]
       },
+      "LoginMfaRequiredResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "MFA required"
+          },
+          "code": {
+            "type": "string",
+            "example": "MFA_REQUIRED"
+          },
+          "mfaRequired": {
+            "type": "boolean",
+            "example": true
+          },
+          "challengeId": {
+            "type": "string",
+            "example": "cmfchallenge123",
+            "description": "Short-lived challenge ID to submit with the MFA code"
+          },
+          "mfaMethod": {
+            "type": "string",
+            "enum": ["EMAIL"],
+            "example": "EMAIL"
+          }
+        },
+        "required": [
+          "message",
+          "code",
+          "mfaRequired",
+          "challengeId",
+          "mfaMethod"
+        ]
+      },
       "ResetPasswordEmailDto": {
         "type": "object",
         "properties": {
@@ -552,18 +611,34 @@
       "MfaDto": {
         "type": "object",
         "properties": {
-          "userId": {
+          "challengeId": {
             "type": "string",
-            "example": "user-id-123",
-            "description": "User ID for MFA verification"
+            "example": "cmfchallenge123",
+            "description": "MFA challenge ID returned by the login endpoint"
           },
-          "mfaCode": {
+          "code": {
             "type": "string",
             "example": "123456",
-            "description": "MFA code for verification"
+            "description": "Short-lived MFA code sent to the user"
           }
         },
-        "required": ["userId", "mfaCode"]
+        "required": ["challengeId", "code"]
+      },
+      "MfaPreferenceDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether MFA should be required during login"
+          },
+          "method": {
+            "type": "string",
+            "enum": ["EMAIL"],
+            "example": "EMAIL"
+          }
+        },
+        "required": ["enabled"]
       },
       "RefreshTokenRequestDto": {
         "type": "object",

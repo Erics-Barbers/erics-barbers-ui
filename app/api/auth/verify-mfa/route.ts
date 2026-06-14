@@ -1,17 +1,11 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { LoginMfaRequiredResponseDto, LoginResponseDto } from '@/api/generated';
 import { rejectCrossSiteRequest } from '../_utils/reject-cross-site-request';
 
-type AuthErrorResponse = {
-  message?: string | string[];
+type VerifyMfaResponse = {
+  accessToken: string;
+  refreshToken: string;
 };
-
-function isEmailNotVerified(error: AuthErrorResponse): boolean {
-  return Array.isArray(error.message)
-    ? error.message.includes('Email not verified')
-    : error.message === 'Email not verified';
-}
 
 export async function POST(req: Request) {
   const crossSiteResponse = rejectCrossSiteRequest(req);
@@ -22,33 +16,23 @@ export async function POST(req: Request) {
   const secure = process.env.NODE_ENV === 'production';
 
   const apiRes = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`,
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/verify-mfa`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': req.headers.get('User-Agent') ?? '',
+      },
       body: JSON.stringify(body),
     },
   );
 
   if (!apiRes.ok) {
-    const err = (await apiRes.json().catch(() => ({}))) as AuthErrorResponse;
-    if (isEmailNotVerified(err)) {
-      return NextResponse.json(
-        { message: 'Email not verified', code: 'EMAIL_NOT_VERIFIED' },
-        { status: 403 },
-      );
-    }
-
+    const err = (await apiRes.json().catch(() => ({}))) as unknown;
     return NextResponse.json(err, { status: apiRes.status });
   }
 
-  const data = (await apiRes.json()) as
-    | LoginResponseDto
-    | LoginMfaRequiredResponseDto;
-
-  if ('mfaRequired' in data) {
-    return NextResponse.json(data, { status: 200 });
-  }
+  const data = (await apiRes.json()) as VerifyMfaResponse;
 
   cookieStore.set('accessToken', data.accessToken, {
     httpOnly: true,

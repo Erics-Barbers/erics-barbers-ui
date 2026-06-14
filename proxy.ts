@@ -15,7 +15,6 @@ type RefreshResult = {
 
 const protectedRoutePrefixes = [
   '/my-account',
-  '/bookings',
   '/admin',
   '/barber',
   '/dashboard',
