@@ -16,7 +16,21 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Eric's Barbers",
-  description: "Book your appointment at Eric's Barbers easily online.",
+  description:
+    "Book your next trim at Eric's Barbers in Luton with easy online appointments.",
+  metadataBase: new URL('https://erics-barbers-luton.co.uk'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: "Eric's Barbers",
+    description:
+      "Fresh cuts in Luton. Book your next trim at Eric's Barbers.",
+    url: '/',
+    siteName: "Eric's Barbers",
+    locale: 'en_GB',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({

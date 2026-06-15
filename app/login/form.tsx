@@ -1,4 +1,5 @@
-import { TextField, Button } from '@mui/material';
+import AuthSubmitButton from '@/app/components/auth/auth-submit-button';
+import AuthTextField from '@/app/components/auth/auth-text-field';
 import Form from 'next/form';
 import React from 'react';
 
@@ -17,45 +18,24 @@ export default function LoginForm(props: LoginFormProps) {
   };
 
   return (
-    <Form action="" onSubmit={handleSubmit}>
-      <div className="flex flex-col gap-4 mx-auto mt-10">
-        <TextField
-          label="Email"
-          type="email"
-          variant="outlined"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          InputProps={{
-            style: { backgroundColor: '#fff3cd', borderRadius: 12 },
-          }}
-          InputLabelProps={{
-            shrink: true,
-            style: { color: '#fff', position: 'static' },
-          }}
-        />
-        <TextField
-          label="Password"
-          type="password"
-          variant="outlined"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          InputProps={{
-            style: { backgroundColor: '#fff3cd', borderRadius: 12 },
-          }}
-          InputLabelProps={{
-            shrink: true,
-            style: { color: '#fff', position: 'static' },
-          }}
-        />
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          loading={props.submitting}
-        >
-          Login
-        </Button>
-      </div>
+    <Form action="" className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <AuthTextField
+        autoComplete="email"
+        disabled={props.submitting}
+        label="Email"
+        onChange={(e) => setEmail(e.target.value)}
+        type="email"
+        value={email}
+      />
+      <AuthTextField
+        autoComplete="current-password"
+        disabled={props.submitting}
+        label="Password"
+        onChange={(e) => setPassword(e.target.value)}
+        type="password"
+        value={password}
+      />
+      <AuthSubmitButton loading={props.submitting}>Log in</AuthSubmitButton>
     </Form>
   );
 }

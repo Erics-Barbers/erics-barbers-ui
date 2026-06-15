@@ -1,9 +1,10 @@
 'use client';
 
+import AuthPageShell from '@/app/components/auth/auth-page-shell';
+import Notification from '@/app/components/notification';
 import Link from 'next/link';
 import RegisterForm from './form';
 import React from 'react';
-import Notification from '@/app/components/notification';
 import { useRouter } from 'next/navigation';
 
 export default function Register() {
@@ -39,18 +40,43 @@ export default function Register() {
   };
 
   return (
-    <div className="flex flex-1 flex-col py-16 items-center bg-black">
-      <h1 className="text-4xl font-bold mb-8">Register Your Account</h1>
-      <RegisterForm submitting={submitting} onRegister={registerUser} />
-      <span className="mt-4 text-gray-600">
-        Already have an account?{' '}
-        <Link href="/login" className="text-blue-500">
-          Login here
-        </Link>
-      </span>
-      <p>
-        By signing up, you agree to our Terms of Service and Privacy Policy.
-      </p>
+    <>
+      <AuthPageShell
+        description="Create an account to book faster and keep track of your appointments."
+        footer={
+          <>
+            <p>
+              Already have an account?{' '}
+              <Link
+                href="/login"
+                className="font-medium text-zinc-50 underline underline-offset-4"
+              >
+                Log in here
+              </Link>
+            </p>
+            <p className="mt-3 text-xs leading-5 text-zinc-500">
+              By signing up, you agree to our{' '}
+              <Link
+                href="/terms-of-service"
+                className="underline underline-offset-4"
+              >
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link
+                href="/privacy-policy"
+                className="underline underline-offset-4"
+              >
+                Privacy Policy
+              </Link>
+              .
+            </p>
+          </>
+        }
+        title="Create your account"
+      >
+        <RegisterForm submitting={submitting} onRegister={registerUser} />
+      </AuthPageShell>
 
       <Notification
         message={`Registration failed: ${errorMessage}`}
@@ -60,6 +86,6 @@ export default function Register() {
           setError(false);
         }}
       />
-    </div>
+    </>
   );
 }

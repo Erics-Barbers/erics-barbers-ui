@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { rejectCrossSiteRequest } from '../_utils/reject-cross-site-request';
 
 type RefreshResult = {
   accessToken: string;
@@ -50,9 +51,32 @@ function getApiBaseUrl(): string | null {
   return process.env.NEXT_PUBLIC_API_BASE_URL ?? null;
 }
 
-async function fetchProfile(apiBaseUrl: string, accessToken: string) {
+async function fetchProfile(
+  apiBaseUrl: string,
+  accessToken: string,
+  init?: RequestInit,
+) {
   return fetch(`${apiBaseUrl}/auth/profile`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    ...init,
+    headers: {
+      ...init?.headers,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+}
+
+async function updateProfile(
+  apiBaseUrl: string,
+  accessToken: string,
+  body: unknown,
+) {
+  return fetchProfile(apiBaseUrl, accessToken, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
   });
 }
 
@@ -110,6 +134,18 @@ function createExpiredSessionResponse() {
 }
 
 export async function GET(req: Request) {
+  return handleProfileRequest(req);
+}
+
+export async function PUT(req: Request) {
+  const crossSiteResponse = rejectCrossSiteRequest(req);
+  if (crossSiteResponse) return crossSiteResponse;
+
+  const body = await req.json().catch(() => ({}));
+  return handleProfileRequest(req, body);
+}
+
+async function handleProfileRequest(req: Request, updateBody?: unknown) {
   const apiBaseUrl = getApiBaseUrl();
 
   if (!apiBaseUrl) {
@@ -123,9 +159,12 @@ export async function GET(req: Request) {
   const accessToken = cookieStore.get('accessToken')?.value;
   const refreshToken = cookieStore.get('refreshToken')?.value;
   const userAgent = req.headers.get('user-agent');
+  const isUpdate = updateBody !== undefined;
 
   if (accessToken) {
-    const apiRes = await fetchProfile(apiBaseUrl, accessToken);
+    const apiRes = isUpdate
+      ? await updateProfile(apiBaseUrl, accessToken, updateBody)
+      : await fetchProfile(apiBaseUrl, accessToken);
 
     if (!isAuthFailure(apiRes)) {
       return createProfileResponse(apiRes);
@@ -147,7 +186,9 @@ export async function GET(req: Request) {
     return res;
   }
 
-  const retryRes = await fetchProfile(apiBaseUrl, tokens.accessToken);
+  const retryRes = isUpdate
+    ? await updateProfile(apiBaseUrl, tokens.accessToken, updateBody)
+    : await fetchProfile(apiBaseUrl, tokens.accessToken);
 
   if (isAuthFailure(retryRes)) {
     return createExpiredSessionResponse();

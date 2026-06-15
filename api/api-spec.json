@@ -116,6 +116,14 @@
       "put": {
         "operationId": "AuthController_updateProfile",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateProfileDto" }
+            }
+          }
+        },
         "responses": {
           "200": { "description": "User profile updated successfully" }
         },
@@ -580,6 +588,18 @@
           "challengeId",
           "mfaMethod"
         ]
+      },
+      "UpdateProfileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "Eric Customer",
+            "description": "Display name shown on the user's account"
+          }
+        },
+        "required": ["name"]
       },
       "ResetPasswordEmailDto": {
         "type": "object",

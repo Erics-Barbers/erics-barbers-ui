@@ -1,11 +1,13 @@
 'use client';
 
+import AuthPageShell from '@/app/components/auth/auth-page-shell';
+import AuthSubmitButton from '@/app/components/auth/auth-submit-button';
+import AuthTextField from '@/app/components/auth/auth-text-field';
+import Notification from '@/app/components/notification';
 import Link from 'next/link';
 import LoginForm from './form';
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import Notification from '@/app/components/notification';
-import { Button, TextField } from '@mui/material';
 
 type LoginErrorResponse = {
   code?: string;
@@ -108,45 +110,43 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-1 flex-col py-16 items-center bg-black">
-      <h1 className="text-4xl font-bold mb-8">Login to Your Account</h1>
-      {mfaChallenge ? (
-        <form onSubmit={verifyMfa}>
-          <div className="flex flex-col gap-4 mx-auto mt-10">
-            <TextField
-              label="Verification code"
-              type="text"
-              variant="outlined"
-              value={mfaCode}
-              onChange={(e) => setMfaCode(e.target.value)}
-              inputProps={{ inputMode: 'numeric', maxLength: 6 }}
-              InputProps={{
-                style: { backgroundColor: '#fff3cd', borderRadius: 12 },
-              }}
-              InputLabelProps={{
-                shrink: true,
-                style: { color: '#fff', position: 'static' },
-              }}
-            />
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              loading={submitting}
+    <>
+      <AuthPageShell
+        description="Manage your bookings and keep your appointment details in one place."
+        footer={
+          <>
+            Don&apos;t have an account?{' '}
+            <Link
+              href="/register"
+              className="font-medium text-zinc-50 underline underline-offset-4"
             >
-              Verify
-            </Button>
-          </div>
-        </form>
-      ) : (
-        <LoginForm submitting={submitting} onLogin={loginUser} />
-      )}
-      <span className="mt-4 text-gray-600">
-        Don&apos;t have an account?{' '}
-        <Link href="/register" className="text-blue-500">
-          Register here
-        </Link>
-      </span>
+              Register here
+            </Link>
+          </>
+        }
+        title="Log in to your account"
+      >
+        {mfaChallenge ? (
+          <form className="flex flex-col gap-4" onSubmit={verifyMfa}>
+            <p className="text-sm leading-6 text-zinc-400">
+              Enter the verification code for your {mfaChallenge.method}{' '}
+              authentication.
+            </p>
+            <AuthTextField
+              autoComplete="one-time-code"
+              disabled={submitting}
+              inputProps={{ inputMode: 'numeric', maxLength: 6 }}
+              label="Verification code"
+              onChange={(e) => setMfaCode(e.target.value)}
+              type="text"
+              value={mfaCode}
+            />
+            <AuthSubmitButton loading={submitting}>Verify code</AuthSubmitButton>
+          </form>
+        ) : (
+          <LoginForm submitting={submitting} onLogin={loginUser} />
+        )}
+      </AuthPageShell>
 
       <Notification
         message="Login failed. Please try again."
@@ -156,6 +156,6 @@ export default function Login() {
           setError(false);
         }}
       />
-    </div>
+    </>
   );
 }

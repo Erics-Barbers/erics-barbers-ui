@@ -1,11 +1,10 @@
 import InstagramIcon from '@mui/icons-material/Instagram';
 import { WhatsApp as WhatsappIcon } from '@mui/icons-material';
-import { Phone } from '@mui/icons-material';
 import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="w-full flex flex-row justify-around border-t-4 border-white pt-4 text-zinc-600 dark:text-zinc-400 pb-2">
+    <footer className="grid w-full gap-8 border-t-2 border-white px-4 py-6 text-zinc-600 dark:text-zinc-400 sm:px-8 md:grid-cols-3 md:px-24">
       <div className="flex flex-col">
         <h5 className="text-base font-semibold mb-4">Developer</h5>
         <span className="text-sm">Website built by Fahmid Haque</span>
@@ -26,26 +25,30 @@ export default function Footer() {
         </Link>
       </div>
       <div className="flex flex-col">
-        <div>
+        <div className="flex flex-col gap-2">
           <h5 className="text-base font-semibold mb-4">Socials</h5>
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://www.instagram.com/eric_barbers/"
-          >
-            <InstagramIcon />
-          </a>
-          <span className="text-sm">Instagram</span>
-        </div>
-        <div>
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://wa.me/1234567890"
-          >
-            <WhatsappIcon />
-          </a>
-          <span className="text-sm">WhatsApp</span>
+          <div className="flex items-center gap-2">
+            <a
+              aria-label="Instagram"
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://www.instagram.com/eric_barbers/"
+            >
+              <InstagramIcon />
+            </a>
+            <span className="text-sm">Instagram</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              aria-label="WhatsApp"
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://wa.me/1234567890"
+            >
+              <WhatsappIcon />
+            </a>
+            <span className="text-sm">WhatsApp</span>
+          </div>
         </div>
       </div>
     </footer>

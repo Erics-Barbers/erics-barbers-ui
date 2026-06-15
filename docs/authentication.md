@@ -63,7 +63,13 @@ Refresh returns a rotated token pair. The BFF must set both cookies:
 The current refresh behavior exists in:
 
 - `proxy.ts` for protected page navigation.
-- `app/api/auth/profile/route.ts` for the profile BFF endpoint.
+- `app/api/auth/profile/route.ts` for profile read/update BFF calls.
+
+## Profile
+
+The `/my-account` page reads account details from `GET /api/auth/profile`.
+
+The same BFF route supports `PUT /api/auth/profile` for profile updates. At the moment, ordinary profile editing only updates the user's display name. Email is displayed read-only because changing login email safely needs a dedicated verification flow.
 
 ## Logout
 
@@ -101,6 +107,7 @@ This is enforced with an ESLint `no-restricted-imports` rule that blocks generat
 Auth route handler and proxy behavior is covered by Jest specs in `test/`:
 
 - profile refresh and retry
+- profile update forwarding
 - profile cookie clearing on refresh failure
 - local logout cookie clearing
 - cross-site auth request rejection
