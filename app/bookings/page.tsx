@@ -2,49 +2,80 @@ import Link from 'next/link';
 
 const isBookingEnabled = process.env.NEXT_PUBLIC_BOOKING_ENABLED === 'true';
 
+function BookingCard({
+  cta,
+  description,
+  href,
+  primary = false,
+  title,
+}: {
+  cta: string;
+  description: string;
+  href: string;
+  primary?: boolean;
+  title: string;
+}) {
+  return (
+    <section className="flex flex-col rounded-2xl border border-white/15 bg-zinc-950 p-6">
+      <h2 className="text-2xl font-semibold text-zinc-50">{title}</h2>
+      <p className="mt-3 flex-1 text-sm leading-6 text-zinc-400">
+        {description}
+      </p>
+      <Link
+        href={href}
+        className={
+          primary
+            ? 'mt-6 flex h-12 items-center justify-center rounded-full bg-zinc-50 px-6 text-base font-medium text-black transition-colors hover:bg-zinc-300'
+            : 'mt-6 flex h-12 items-center justify-center rounded-full border border-white/20 px-6 text-base font-medium text-zinc-50 transition-colors hover:bg-white/10'
+        }
+      >
+        {cta}
+      </Link>
+    </section>
+  );
+}
+
 export default function Bookings() {
   if (!isBookingEnabled) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center min-h-screen bg-black py-16">
-        <div className="bg-[#181818] rounded-2xl shadow-lg p-10 max-w-xl w-full flex flex-col items-center">
-          <h1 className="text-3xl font-bold text-white mb-4">
-            Bookings Coming Soon
-          </h1>
-          <p className="text-white/80">
+      <main className="flex flex-1 items-center justify-center bg-black px-4 py-12 text-zinc-50 sm:px-6">
+        <section className="w-full max-w-xl rounded-2xl border border-white/15 bg-zinc-950 p-6 text-center sm:p-8">
+          <h1 className="text-3xl font-semibold">Bookings Coming Soon</h1>
+          <p className="mt-3 text-sm leading-6 text-zinc-400 sm:text-base">
             The booking feature is currently in development. Please check back
-            later!
+            later.
           </p>
-        </div>
-      </div>
+        </section>
+      </main>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center min-h-screen bg-black py-16">
-      <div className="flex flex-row bg-[#181818] rounded-2xl shadow-lg overflow-hidden divide-x-2 divide-white/20 w-full max-w-2xl">
-        <div className="flex flex-col items-center justify-center flex-1 p-10 gap-6">
-          <h1 className="text-3xl font-bold text-white mb-4">
-            Create a new booking
-          </h1>
-          <Link
+    <main className="flex flex-1 bg-black px-4 py-12 text-zinc-50 sm:px-6 lg:px-24">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+        <header className="max-w-2xl">
+          <h1 className="text-3xl font-semibold sm:text-4xl">Bookings</h1>
+          <p className="mt-3 text-base leading-7 text-zinc-400">
+            Book a new appointment or manage an existing one.
+          </p>
+        </header>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          <BookingCard
+            cta="Start booking"
+            description="Choose a service and reserve a time that works for you."
             href="/bookings/new-booking"
-            className="flex h-12 w-40 items-center justify-center rounded-full bg-white text-black font-semibold px-5 transition-colors hover:bg-[#383838] hover:text-white dark:hover:bg-[#ccc]"
-          >
-            Book
-          </Link>
-        </div>
-        <div className="flex flex-col items-center justify-center flex-1 p-10 gap-6">
-          <h1 className="text-3xl font-bold text-white mb-4">
-            Manage an existing booking
-          </h1>
-          <Link
-            href="/bookings/new-booking"
-            className="flex h-12 w-40 items-center justify-center rounded-full border border-solid border-white/20 text-white px-5 transition-colors hover:border-transparent hover:bg-black/10 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-          >
-            Manage
-          </Link>
+            primary
+            title="Create a new booking"
+          />
+          <BookingCard
+            cta="Manage booking"
+            description="Review, amend, or cancel an appointment you already made."
+            href="/bookings/manage-booking"
+            title="Manage an existing booking"
+          />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

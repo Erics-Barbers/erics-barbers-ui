@@ -1,8 +1,8 @@
 export default function TermsOfService() {
   return (
-    <div className="flex flex-col w-full min-h-screen py-8 px-48 bg-white dark:bg-black">
-      <article className="prose dark:prose-invert max-w-none space-y-8">
-        <h1 className="mb-2 text-4xl font-extrabold text-black dark:text-white">
+    <main className="flex flex-1 bg-black px-4 py-12 text-zinc-100 sm:px-6 lg:px-24">
+      <article className="mx-auto w-full max-w-4xl space-y-8 rounded-2xl border border-white/15 bg-zinc-950 p-6 leading-7 text-zinc-300 sm:p-8">
+        <h1 className="mb-2 text-3xl font-semibold text-zinc-50 sm:text-4xl">
           Terms of Service
         </h1>
         <p>
@@ -18,7 +18,7 @@ export default function TermsOfService() {
           use our Services.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           1. Your Responsibilities
         </h2>
         <p>When using our Services, you agree to:</p>
@@ -40,7 +40,7 @@ export default function TermsOfService() {
           </li>
         </ul>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           2. Prohibited Activities
         </h2>
         <p>
@@ -62,7 +62,7 @@ export default function TermsOfService() {
           </li>
         </ul>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           3. Account Management
         </h2>
         <p>
@@ -76,7 +76,7 @@ export default function TermsOfService() {
           .
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           4. Privacy
         </h2>
         <p>
@@ -85,7 +85,7 @@ export default function TermsOfService() {
           <a href="/privacy-policy">Privacy Policy</a>.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           5. Changes to Services
         </h2>
         <p>
@@ -95,7 +95,7 @@ export default function TermsOfService() {
           after any updates constitutes your acceptance of the revised Terms.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           6. Payment and Cancellations
         </h2>
         <p>
@@ -106,7 +106,7 @@ export default function TermsOfService() {
           accordance with our policy may result in charges or penalties.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           7. Limitation of Liability
         </h2>
         <p>
@@ -116,7 +116,7 @@ export default function TermsOfService() {
           unauthorized access, downtime, and service interruptions.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           8. Termination
         </h2>
         <p>
@@ -126,7 +126,7 @@ export default function TermsOfService() {
           of permissible use.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           9. Governing Law
         </h2>
         <p>
@@ -134,7 +134,7 @@ export default function TermsOfService() {
           disputes will be resolved in courts located in England and Wales.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           10. Contact Us
         </h2>
         <p>If you have any questions about these Terms, please contact us:</p>
@@ -153,6 +153,6 @@ export default function TermsOfService() {
           </li>
         </ul>
       </article>
-    </div>
+    </main>
   );
 }

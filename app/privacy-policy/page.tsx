@@ -1,13 +1,13 @@
 export default function PrivacyPolicy() {
   return (
-    <div className="flex flex-col w-full min-h-screen py-8 px-48 bg-white dark:bg-black">
-      <article className="prose dark:prose-invert max-w-none space-y-8">
-        <h1 className="mb-2 text-4xl font-extrabold text-black dark:text-white">
+    <main className="flex flex-1 bg-black px-4 py-12 text-zinc-100 sm:px-6 lg:px-24">
+      <article className="mx-auto w-full max-w-4xl space-y-8 rounded-2xl border border-white/15 bg-zinc-950 p-6 leading-7 text-zinc-300 sm:p-8">
+        <h1 className="mb-2 text-3xl font-semibold text-zinc-50 sm:text-4xl">
           Privacy Policy
         </h1>
         <p>
           <strong>Effective Date:</strong>{' '}
-          <span className="italic">27/01/20206</span>
+          <span className="italic">27/01/2026</span>
         </p>
         <p>
           Eric&apos;s Barber Shop (&quot;we,&quot; &quot;our,&quot; or
@@ -18,7 +18,7 @@ export default function PrivacyPolicy() {
           Privacy Policy.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           Information We Collect
         </h2>
         <p>
@@ -71,7 +71,7 @@ export default function PrivacyPolicy() {
           </li>
         </ol>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           How We Use Your Information
         </h2>
         <p>We use your personal data for the following purposes:</p>
@@ -102,7 +102,7 @@ export default function PrivacyPolicy() {
           </li>
         </ol>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           Information Sharing
         </h2>
         <p>
@@ -124,7 +124,7 @@ export default function PrivacyPolicy() {
           </li>
         </ol>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           Data Retention and Security
         </h2>
         <p>
@@ -135,7 +135,7 @@ export default function PrivacyPolicy() {
           access, alteration, disclosure, or destruction.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           Cookies and Tracking
         </h2>
         <p>
@@ -147,7 +147,7 @@ export default function PrivacyPolicy() {
           them.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           Your Rights
         </h2>
         <p>You have the following rights regarding your personal data:</p>
@@ -174,7 +174,7 @@ export default function PrivacyPolicy() {
           <strong>fahmidulhaque97@pm.me</strong>.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           Third-Party Services
         </h2>
         <p>
@@ -186,7 +186,7 @@ export default function PrivacyPolicy() {
           informed about their practices.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           Changes to This Privacy Policy
         </h2>
         <p>
@@ -196,7 +196,7 @@ export default function PrivacyPolicy() {
           <strong>Effective Date</strong> at the top of this page.
         </p>
 
-        <h2 className="mb-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+        <h2 className="mb-2 text-2xl font-semibold text-zinc-50">
           Contact Us
         </h2>
         <p>
@@ -215,6 +215,6 @@ export default function PrivacyPolicy() {
           </li>
         </ul>
       </article>
-    </div>
+    </main>
   );
 }

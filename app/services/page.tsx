@@ -1,145 +1,83 @@
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TableCell from '@mui/material/TableCell';
-import Paper from '@mui/material/Paper';
 import Link from 'next/link';
 
-const tableContainerClass = 'bg-zinc-900 rounded-lg shadow mb-8';
-const tableContainerClassNoMargin = 'bg-zinc-900 rounded-lg shadow';
-const tableHeadCellClass = 'bg-zinc-800 text-white font-semibold text-lg';
-const tableRowClass = 'bg-black text-white';
-const tableBodyCellClass = 'text-white';
-const headingClass = 'text-2xl font-bold text-white mb-4';
+const appointmentServices = [
+  { name: 'Haircut with Beard Trim', price: 'GBP 20' },
+  { name: 'Haircut with Skin Fade', price: 'GBP 20' },
+  { name: 'Beard Trim', price: 'GBP 10' },
+];
+
+const walkInServices = [
+  { name: 'Haircut with Beard Trim', price: 'GBP 20' },
+  { name: 'Haircut with Skin Fade', price: 'GBP 20' },
+  { name: 'Beard Trim', price: 'GBP 10' },
+];
+
+function PriceList({
+  description,
+  services,
+  title,
+}: {
+  description: string;
+  services: Array<{ name: string; price: string }>;
+  title: string;
+}) {
+  return (
+    <section className="rounded-2xl border border-white/15 bg-zinc-950 p-5 sm:p-6">
+      <div className="mb-5">
+        <h2 className="text-2xl font-semibold text-zinc-50">{title}</h2>
+        <p className="mt-2 text-sm leading-6 text-zinc-400">{description}</p>
+      </div>
+      <div className="divide-y divide-white/10">
+        {services.map((service) => (
+          <div
+            className="flex items-center justify-between gap-4 py-4"
+            key={`${title}-${service.name}`}
+          >
+            <span className="text-zinc-100">{service.name}</span>
+            <span className="shrink-0 rounded-full border border-white/15 px-3 py-1 text-sm font-medium text-zinc-50">
+              {service.price}
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export default function Services() {
   return (
-    <div className="w-full bg-black py-8 px-48">
-      <h1 className={headingClass}>Appointments</h1>
-      <TableContainer component={Paper} className={tableContainerClass}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell className={tableHeadCellClass} sx={{ color: 'white' }}>
-                Service
-              </TableCell>
-              <TableCell
-                align="right"
-                className={tableHeadCellClass}
-                sx={{ color: 'white' }}
-              >
-                Price
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <TableRow className={tableRowClass}>
-              <TableCell className={tableBodyCellClass} sx={{ color: 'white' }}>
-                Haircut with Beard Trim
-              </TableCell>
-              <TableCell
-                align="right"
-                className={tableBodyCellClass}
-                sx={{ color: 'white' }}
-              >
-                £20
-              </TableCell>
-            </TableRow>
-            <TableRow className={tableRowClass}>
-              <TableCell className={tableBodyCellClass} sx={{ color: 'white' }}>
-                Haircut with Skin Fade
-              </TableCell>
-              <TableCell
-                align="right"
-                className={tableBodyCellClass}
-                sx={{ color: 'white' }}
-              >
-                £20
-              </TableCell>
-            </TableRow>
-            <TableRow className={tableRowClass}>
-              <TableCell className={tableBodyCellClass} sx={{ color: 'white' }}>
-                Beard Trim
-              </TableCell>
-              <TableCell
-                align="right"
-                className={tableBodyCellClass}
-                sx={{ color: 'white' }}
-              >
-                £10
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <h1 className={headingClass}>Walk In</h1>
-      <TableContainer component={Paper} className={tableContainerClassNoMargin}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell className={tableHeadCellClass} sx={{ color: 'white' }}>
-                Service
-              </TableCell>
-              <TableCell
-                align="right"
-                className={tableHeadCellClass}
-                sx={{ color: 'white' }}
-              >
-                Price
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <TableRow className={tableRowClass}>
-              <TableCell className={tableBodyCellClass} sx={{ color: 'white' }}>
-                Haircut with Beard Trim
-              </TableCell>
-              <TableCell
-                align="right"
-                className={tableBodyCellClass}
-                sx={{ color: 'white' }}
-              >
-                £20
-              </TableCell>
-            </TableRow>
-            <TableRow className={tableRowClass}>
-              <TableCell className={tableBodyCellClass} sx={{ color: 'white' }}>
-                Haircut with Skin Fade
-              </TableCell>
-              <TableCell
-                align="right"
-                className={tableBodyCellClass}
-                sx={{ color: 'white' }}
-              >
-                £20
-              </TableCell>
-            </TableRow>
-            <TableRow className={tableRowClass}>
-              <TableCell className={tableBodyCellClass} sx={{ color: 'white' }}>
-                Beard Trim
-              </TableCell>
-              <TableCell
-                align="right"
-                className={tableBodyCellClass}
-                sx={{ color: 'white' }}
-              >
-                £10
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </TableContainer>
+    <main className="flex flex-1 bg-black px-4 py-12 text-zinc-50 sm:px-6 lg:px-24">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+        <header className="max-w-2xl">
+          <h1 className="text-3xl font-semibold sm:text-4xl">
+            Services and prices
+          </h1>
+          <p className="mt-3 text-base leading-7 text-zinc-400">
+            Choose a service before booking, or use the prices below as a quick
+            guide before you visit.
+          </p>
+        </header>
 
-      <div className="flex flex-col gap-4 text-base font-medium sm:flex-row py-8 justify-center">
+        <div className="grid gap-5 lg:grid-cols-2">
+          <PriceList
+            description="Best when you want a confirmed time slot."
+            services={appointmentServices}
+            title="Appointments"
+          />
+          <PriceList
+            description="Available around the day's booked appointments."
+            services={walkInServices}
+            title="Walk-ins"
+          />
+        </div>
+
         <Link
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-39.5"
-          href="/booking"
+          className="flex h-12 w-full items-center justify-center rounded-full bg-zinc-50 px-6 text-base font-medium text-black transition-colors hover:bg-zinc-300 sm:w-fit"
+          href="/bookings"
         >
-          Make a Booking
+          Book Now
         </Link>
       </div>
-    </div>
+    </main>
   );
 }

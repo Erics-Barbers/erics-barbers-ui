@@ -1,10 +1,22 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { LoginMfaRequiredResponseDto, LoginResponseDto } from '@/api/generated';
 import { rejectCrossSiteRequest } from '../_utils/reject-cross-site-request';
 
 type AuthErrorResponse = {
   message?: string | string[];
+};
+
+type LoginResponseBody = {
+  accessToken: string;
+  refreshToken: string;
+};
+
+type LoginMfaRequiredResponseBody = {
+  message: string;
+  code: 'MFA_REQUIRED';
+  mfaRequired: true;
+  challengeId: string;
+  mfaMethod: string;
 };
 
 function isEmailNotVerified(error: AuthErrorResponse): boolean {
@@ -43,8 +55,8 @@ export async function POST(req: Request) {
   }
 
   const data = (await apiRes.json()) as
-    | LoginResponseDto
-    | LoginMfaRequiredResponseDto;
+    | LoginResponseBody
+    | LoginMfaRequiredResponseBody;
 
   if ('mfaRequired' in data) {
     return NextResponse.json(data, { status: 200 });

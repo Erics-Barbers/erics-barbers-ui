@@ -1,8 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Link } from '@mui/material';
 
 function EmailVerifyInner() {
   const [verifying, setVerifying] = React.useState(true);
@@ -46,51 +46,85 @@ function EmailVerifyInner() {
 
   let content;
   if (verifying) {
-    content = <div className="text-lg text-white">Verifying your email...</div>;
+    content = (
+      <>
+        <h1 className="text-3xl font-semibold sm:text-4xl">
+          Verifying your email
+        </h1>
+        <p className="mt-4 text-sm leading-6 text-zinc-400 sm:text-base">
+          This should only take a moment.
+        </p>
+      </>
+    );
   } else if (verified) {
     content = (
       <>
-        <h1 className="text-4xl font-bold mb-8 text-white">
-          Your email has been verified successfully!
+        <h1 className="text-3xl font-semibold sm:text-4xl">
+          Email verified
         </h1>
-        <p className="text-lg text-white mb-6">
-          Setup your mobile number for OTP access and mobile notifications or go
-          ahead and make a booking
+        <p className="mt-4 text-sm leading-6 text-zinc-400 sm:text-base">
+          Your account is ready. You can manage your profile or continue to
+          booking.
         </p>
-        <div className="flex flex-col gap-4 w-full max-w-xs">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-black font-semibold px-5 transition-colors hover:bg-[#383838] hover:text-white dark:hover:bg-[#ccc] md:w-39.5"
+            className="flex h-12 items-center justify-center rounded-full bg-zinc-50 px-6 text-base font-medium text-black transition-colors hover:bg-zinc-300"
             href="/my-account"
-            underline="none"
           >
-            Setup mobile number
+            My Account
           </Link>
           <Link
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-white/20 text-white px-5 transition-colors hover:border-transparent hover:bg-black/10 dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-39.5"
-            href="/booking"
-            underline="none"
+            className="flex h-12 items-center justify-center rounded-full border border-white/20 px-6 text-base font-medium text-zinc-50 transition-colors hover:bg-white/10"
+            href="/bookings"
           >
-            Make a booking
+            Book Now
           </Link>
         </div>
       </>
     );
   } else if (error) {
-    content = <div className="text-lg text-red-500">Error: {error}</div>;
+    content = (
+      <>
+        <h1 className="text-3xl font-semibold sm:text-4xl">
+          Verification failed
+        </h1>
+        <p className="mt-4 text-sm leading-6 text-red-300">{error}</p>
+        <Link
+          className="mt-6 flex h-12 items-center justify-center rounded-full border border-white/20 px-6 text-base font-medium text-zinc-50 transition-colors hover:bg-white/10"
+          href="/verify-email"
+        >
+          Resend verification email
+        </Link>
+      </>
+    );
   } else {
-    content = <div className="text-lg text-white">Unknown state.</div>;
+    content = (
+      <p className="text-sm leading-6 text-zinc-400">
+        Unable to determine verification status.
+      </p>
+    );
   }
 
   return (
-    <div className="flex flex-1 flex-col py-16 gap-y-4 items-center bg-black min-h-screen justify-center">
-      {content}
-    </div>
+    <main className="flex flex-1 items-center justify-center bg-black px-4 py-12 text-zinc-50 sm:px-6">
+      <section className="w-full max-w-xl rounded-2xl border border-white/15 bg-zinc-950 p-6 text-center sm:p-8">
+        {content}
+      </section>
+    </main>
   );
 }
 
 export default function EmailVerify() {
   return (
-    <Suspense fallback={<div className="text-lg text-white">Loading...</div>}>
+    <Suspense
+      fallback={
+        <main className="flex flex-1 items-center justify-center bg-black px-4 py-12 text-zinc-50 sm:px-6">
+          <section className="w-full max-w-xl rounded-2xl border border-white/15 bg-zinc-950 p-6 text-center sm:p-8">
+            Loading...
+          </section>
+        </main>
+      }
+    >
       <EmailVerifyInner />
     </Suspense>
   );

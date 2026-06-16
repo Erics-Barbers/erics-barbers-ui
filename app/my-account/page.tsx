@@ -6,12 +6,12 @@ import {
   Chip,
   CircularProgress,
   Divider,
-  TextField,
 } from '@mui/material';
 import { Logout, Save, VerifiedUser } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import Notification, { NotificationType } from '@/app/components/notification';
+import AuthTextField from '@/app/components/auth/auth-text-field';
 
 type UserProfile = {
   id: string;
@@ -165,41 +165,27 @@ export default function MyAccount() {
           </div>
         ) : profile ? (
           <section className="grid gap-6 lg:grid-cols-[1fr_320px]">
-            <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-5 md:p-6">
+            <div className="rounded-2xl border border-white/15 bg-zinc-950 p-5 md:p-6">
               <div className="mb-5 flex flex-col gap-2">
                 <h2 className="text-xl font-medium">Personal Details</h2>
                 <Divider sx={{ borderColor: 'rgb(38 38 38)' }} />
               </div>
 
               <form className="flex flex-col gap-5" onSubmit={saveProfile}>
-                <TextField
+                <AuthTextField
                   label="Display name"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   required
                   fullWidth
                   inputProps={{ maxLength: 80 }}
-                  InputProps={{
-                    style: { backgroundColor: '#fff3cd', borderRadius: 8 },
-                  }}
-                  InputLabelProps={{
-                    shrink: true,
-                    style: { color: '#fff', position: 'static' },
-                  }}
                 />
 
-                <TextField
+                <AuthTextField
                   label="Email"
                   value={profile.email}
                   disabled
                   fullWidth
-                  InputProps={{
-                    style: { backgroundColor: '#e5e5e5', borderRadius: 8 },
-                  }}
-                  InputLabelProps={{
-                    shrink: true,
-                    style: { color: '#fff', position: 'static' },
-                  }}
                 />
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -220,6 +206,20 @@ export default function MyAccount() {
                     startIcon={<Save />}
                     loading={saving}
                     disabled={!hasChanges || name.trim().length === 0}
+                    sx={{
+                      backgroundColor: '#ededed',
+                      borderRadius: '9999px',
+                      boxShadow: 'none',
+                      color: '#000',
+                      fontWeight: 500,
+                      minHeight: 44,
+                      paddingInline: 3,
+                      textTransform: 'none',
+                      '&:hover': {
+                        backgroundColor: '#d4d4d8',
+                        boxShadow: 'none',
+                      },
+                    }}
                   >
                     Save changes
                   </Button>
@@ -227,7 +227,7 @@ export default function MyAccount() {
               </form>
             </div>
 
-            <aside className="rounded-lg border border-neutral-800 bg-neutral-900 p-5 md:p-6">
+            <aside className="rounded-2xl border border-white/15 bg-zinc-950 p-5 md:p-6">
               <h2 className="text-xl font-medium">Account Status</h2>
               <dl className="mt-5 flex flex-col gap-4 text-sm">
                 <div>

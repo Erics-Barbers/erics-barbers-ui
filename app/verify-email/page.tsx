@@ -52,25 +52,49 @@ export default function VerifyEmail() {
   }, [isRunning, timer]);
 
   return (
-    <div className="flex flex-1 flex-col py-16 gap-y-4 items-center bg-black">
-      <h1 className="text-4xl font-bold mb-8 text-white">Verify Your Email</h1>
-      <p className="text-lg text-white">
-        A verification link has been sent to your email address. Please check
-        your inbox and click on the link to verify your account.
-      </p>
-      <p className="text-lg text-white">
-        Didn&apos;t receive the email? Check your spam folder or resend the
-        verification email.
-      </p>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={resendVerificationEmail}
-        disabled={isRunning}
-        style={{ backgroundColor: '#fff', color: '#222', borderRadius: 12 }}
-      >
-        Resend Verification Email {isRunning && `(Wait ${timer} seconds)`}
-      </Button>
-    </div>
+    <main className="flex flex-1 items-center justify-center bg-black px-4 py-12 text-zinc-50 sm:px-6">
+      <section className="w-full max-w-xl rounded-2xl border border-white/15 bg-zinc-950 p-6 text-center sm:p-8">
+        <h1 className="text-3xl font-semibold sm:text-4xl">
+          Verify your email
+        </h1>
+        <p className="mt-4 text-sm leading-6 text-zinc-400 sm:text-base">
+          A verification link has been sent to your email address. Check your
+          inbox and follow the link to finish setting up your account.
+        </p>
+        <p className="mt-3 text-sm leading-6 text-zinc-500">
+          Did not receive it? Check your spam folder or resend the verification
+          email.
+        </p>
+        <div className="mx-auto mt-6 max-w-sm">
+          <Button
+            disabled={isRunning || !email}
+            onClick={resendVerificationEmail}
+            sx={{
+              backgroundColor: '#ededed',
+              borderRadius: '9999px',
+              boxShadow: 'none',
+              color: '#000',
+              fontSize: '1rem',
+              fontWeight: 500,
+              height: 48,
+              paddingInline: 3,
+              textTransform: 'none',
+              width: '100%',
+              '&:hover': {
+                backgroundColor: '#d4d4d8',
+                boxShadow: 'none',
+              },
+              '&.Mui-disabled': {
+                backgroundColor: 'rgba(237, 237, 237, 0.55)',
+                color: 'rgba(0, 0, 0, 0.55)',
+              },
+            }}
+            variant="contained"
+          >
+            Resend Email {isRunning && `(Wait ${timer}s)`}
+          </Button>
+        </div>
+      </section>
+    </main>
   );
 }
