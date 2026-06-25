@@ -13,24 +13,167 @@ type RefreshResult = {
   refreshToken: string;
 };
 
+type RouteSurface = 'customer' | 'staff';
+
 const protectedRoutePrefixes = [
   '/my-account',
+  '/bookings',
+  '/customer/my-account',
+  '/customer/bookings',
   '/admin',
   '/barber',
   '/dashboard',
+  '/staff',
   '/account',
   '/profile',
   '/settings',
+] as const;
+
+const staffRoutePrefixes = [
+  '/availability',
+  '/bookings',
+  '/calendar',
+  '/customers',
+  '/dashboard',
+  '/settings',
+] as const;
+
+const publicCustomerRoutePrefixes = [
+  '/bookings',
+  '/email-verify',
+  '/information',
+  '/login',
+  '/my-account',
+  '/privacy-policy',
+  '/register',
+  '/services',
+  '/terms-of-service',
+  '/verify-email',
 ] as const;
 
 function pathStartsWithPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
-function isProtectedRoute(pathname: string): boolean {
+function getConfiguredHostname(url: string | undefined): string | null {
+  if (!url) return null;
+
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return url.toLowerCase();
+  }
+}
+
+function getHostname(request: NextRequest): string {
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const host = forwardedHost ?? request.headers.get('host') ?? '';
+
+  return host.split(':')[0]?.toLowerCase() ?? '';
+}
+
+function isStaffHostname(hostname: string): boolean {
+  const configuredStaffHostnames = [
+    getConfiguredHostname(process.env.NEXT_PUBLIC_STAFF_SITE_URL),
+    getConfiguredHostname(process.env.NEXT_PUBLIC_TEST_STAFF_SITE_URL),
+  ].filter(Boolean);
+
+  return (
+    configuredStaffHostnames.includes(hostname) ||
+    hostname.startsWith('staff.') ||
+    hostname.startsWith('test-staff.') ||
+    hostname === 'staff.localhost' ||
+    hostname === 'test-staff.localhost'
+  );
+}
+
+function getRouteSurface(request: NextRequest): RouteSurface {
+  return isStaffHostname(getHostname(request)) ? 'staff' : 'customer';
+}
+
+function isProtectedRoute(
+  pathname: string,
+  surface: RouteSurface,
+): boolean {
+  if (surface === 'staff') {
+    return (
+      pathname === '/' ||
+      staffRoutePrefixes.some((prefix) => pathStartsWithPrefix(pathname, prefix))
+    );
+  }
+
   return protectedRoutePrefixes.some((prefix) =>
     pathStartsWithPrefix(pathname, prefix),
   );
+}
+
+function isLoginRoute(pathname: string): boolean {
+  return (
+    pathStartsWithPrefix(pathname, '/login') ||
+    pathStartsWithPrefix(pathname, '/customer/login') ||
+    pathStartsWithPrefix(pathname, '/staff/login')
+  );
+}
+
+function isStaffRoute(pathname: string): boolean {
+  return pathStartsWithPrefix(pathname, '/staff');
+}
+
+function isStaffLoginRoute(pathname: string, surface: RouteSurface): boolean {
+  return (
+    pathStartsWithPrefix(pathname, '/staff/login') ||
+    (surface === 'staff' && pathStartsWithPrefix(pathname, '/login'))
+  );
+}
+
+function isStaffPublicRoute(pathname: string): boolean {
+  return (
+    pathname === '/' ||
+    staffRoutePrefixes.some((prefix) => pathStartsWithPrefix(pathname, prefix))
+  );
+}
+
+function isPublicCustomerRoute(pathname: string): boolean {
+  return (
+    pathname === '/' ||
+    publicCustomerRoutePrefixes.some((prefix) =>
+      pathStartsWithPrefix(pathname, prefix),
+    )
+  );
+}
+
+function createCustomerRewriteUrl(request: NextRequest): URL {
+  const url = request.nextUrl.clone();
+  url.pathname =
+    request.nextUrl.pathname === '/'
+      ? '/customer'
+      : `/customer${request.nextUrl.pathname}`;
+  return url;
+}
+
+function createStaffRewriteUrl(request: NextRequest): URL {
+  const url = request.nextUrl.clone();
+  url.pathname =
+    request.nextUrl.pathname === '/'
+      ? '/staff'
+      : `/staff${request.nextUrl.pathname}`;
+  return url;
+}
+
+function getAuthenticatedLoginTarget(
+  pathname: string,
+  surface: RouteSurface,
+): string {
+  if (surface === 'staff') return '/dashboard';
+  return isStaffRoute(pathname) ? '/staff/dashboard' : '/my-account';
+}
+
+function getUnauthenticatedLoginTarget(
+  pathname: string,
+  surface: RouteSurface,
+): string {
+  if (surface === 'staff') return '/login';
+  return isStaffRoute(pathname) ? '/staff/login' : '/login';
 }
 
 function decodeJwtPayload(token: string): JwtPayload | null {
@@ -158,8 +301,27 @@ function setAuthCookies(res: NextResponse, tokens: RefreshResult) {
   });
 }
 
-function continueWithTokens(tokens: RefreshResult): NextResponse {
-  const res = NextResponse.next();
+function continueDomainRequest(
+  request: NextRequest,
+  surface: RouteSurface,
+): NextResponse {
+  if (surface === 'staff' && isStaffPublicRoute(request.nextUrl.pathname)) {
+    return NextResponse.rewrite(createStaffRewriteUrl(request));
+  }
+
+  if (surface === 'customer' && isPublicCustomerRoute(request.nextUrl.pathname)) {
+    return NextResponse.rewrite(createCustomerRewriteUrl(request));
+  }
+
+  return NextResponse.next();
+}
+
+function continueWithTokens(
+  request: NextRequest,
+  surface: RouteSurface,
+  tokens: RefreshResult,
+): NextResponse {
+  const res = continueDomainRequest(request, surface);
   setAuthCookies(res, tokens);
   return res;
 }
@@ -177,45 +339,64 @@ function redirectWithTokens(
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const surface = getRouteSurface(request);
 
-  if (pathname.startsWith('/login')) {
+  if (isLoginRoute(pathname)) {
     const token = getAccessToken(request);
 
     if (!token) {
       const tokens = await refreshAccessToken(request);
 
       if (tokens) {
-        return redirectWithTokens(request, '/my-account', pathname, tokens);
+        return redirectWithTokens(
+          request,
+          getAuthenticatedLoginTarget(pathname, surface),
+          pathname,
+          tokens,
+        );
       }
 
-      return NextResponse.next();
+      return continueDomainRequest(request, surface);
     }
 
     const payload = decodeJwtPayload(token);
 
     if (!isExpired(payload?.exp)) {
-      return redirectTo(request, '/my-account', pathname);
+      return redirectTo(
+        request,
+        getAuthenticatedLoginTarget(pathname, surface),
+        pathname,
+      );
     }
 
     const tokens = await refreshAccessToken(request);
     if (tokens) {
-      return redirectWithTokens(request, '/my-account', pathname, tokens);
+      return redirectWithTokens(
+        request,
+        getAuthenticatedLoginTarget(pathname, surface),
+        pathname,
+        tokens,
+      );
     }
 
-    return clearAuthCookies(NextResponse.next());
+    return clearAuthCookies(continueDomainRequest(request, surface));
   }
 
-  if (isProtectedRoute(pathname)) {
+  if (isProtectedRoute(pathname, surface)) {
     const token = getAccessToken(request);
 
     if (!token) {
       const tokens = await refreshAccessToken(request);
 
       if (tokens) {
-        return continueWithTokens(tokens);
+        return continueWithTokens(request, surface, tokens);
       }
 
-      return redirectToAndClearTokens(request, '/login', pathname);
+      return redirectToAndClearTokens(
+        request,
+        getUnauthenticatedLoginTarget(pathname, surface),
+        pathname,
+      );
     }
 
     const payload = decodeJwtPayload(token);
@@ -223,27 +404,44 @@ export async function proxy(request: NextRequest) {
       const tokens = await refreshAccessToken(request);
 
       if (tokens) {
-        return continueWithTokens(tokens);
+        return continueWithTokens(request, surface, tokens);
       }
 
       return redirectToAndClearTokens(
         request,
-        '/login',
+        getUnauthenticatedLoginTarget(pathname, surface),
         request.nextUrl.pathname,
       );
     }
   }
 
-  return NextResponse.next();
+  if (isStaffLoginRoute(pathname, surface)) {
+    return continueDomainRequest(request, surface);
+  }
+
+  return continueDomainRequest(request, surface);
 }
 
 export const config = {
   matcher: [
+    '/',
+    '/customer/:path*',
     '/my-account/:path*',
     '/bookings/:path*',
+    '/email-verify/:path*',
+    '/information/:path*',
+    '/privacy-policy/:path*',
+    '/register/:path*',
+    '/services/:path*',
+    '/terms-of-service/:path*',
+    '/verify-email/:path*',
     '/admin/:path*',
+    '/availability/:path*',
     '/barber/:path*',
+    '/calendar/:path*',
+    '/customers/:path*',
     '/dashboard/:path*',
+    '/staff/:path*',
     '/account/:path*',
     '/profile/:path*',
     '/settings/:path*',

@@ -11,14 +11,21 @@ function createJwt(payload: Record<string, unknown>): string {
 function createProxyRequest(
   pathname: string,
   cookieValues: Record<string, string> = {},
+  hostname = 'ui.example.test',
 ): NextRequest {
-  const url = new URL(`https://ui.example.test${pathname}`);
+  const url = new URL(`https://${hostname}${pathname}`);
 
   return {
     cookies: {
       get: jest.fn((name: string) => {
         const value = cookieValues[name];
         return value ? { name, value } : undefined;
+      }),
+    },
+    headers: {
+      get: jest.fn((name: string) => {
+        if (name.toLowerCase() === 'host') return hostname;
+        return null;
       }),
     },
     nextUrl: {
@@ -44,9 +51,15 @@ const mockedFetch = jest.fn();
 describe('auth proxy', () => {
   const originalFetch = global.fetch;
   const originalApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const originalStaffSiteUrl = process.env.NEXT_PUBLIC_STAFF_SITE_URL;
+  const originalTestStaffSiteUrl =
+    process.env.NEXT_PUBLIC_TEST_STAFF_SITE_URL;
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_API_BASE_URL = 'https://api.example.test';
+    process.env.NEXT_PUBLIC_STAFF_SITE_URL = 'https://staff.example.test';
+    process.env.NEXT_PUBLIC_TEST_STAFF_SITE_URL =
+      'https://test-staff.example.test';
     global.fetch = mockedFetch;
     mockedFetch.mockReset();
   });
@@ -54,6 +67,9 @@ describe('auth proxy', () => {
   afterAll(() => {
     global.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_BASE_URL = originalApiBaseUrl;
+    process.env.NEXT_PUBLIC_STAFF_SITE_URL = originalStaffSiteUrl;
+    process.env.NEXT_PUBLIC_TEST_STAFF_SITE_URL =
+      originalTestStaffSiteUrl;
   });
 
   it('redirects unauthenticated protected routes to login with next path', async () => {
@@ -88,7 +104,9 @@ describe('auth proxy', () => {
       }),
     );
 
-    expect(res.headers.get('x-middleware-next')).toBe('1');
+    expect(res.headers.get('x-middleware-rewrite')).toBe(
+      'https://ui.example.test/customer/bookings/new-booking',
+    );
     expect(mockedFetch).toHaveBeenCalledWith(
       'https://api.example.test/auth/refresh',
       {
@@ -104,6 +122,24 @@ describe('auth proxy', () => {
     expect(res.headers.get('set-cookie')).toContain(
       'refreshToken=new-refresh-token',
     );
+  });
+
+  it('rewrites public customer routes to the internal customer folder', async () => {
+    const res = await proxy(createProxyRequest('/services'));
+
+    expect(res.headers.get('x-middleware-rewrite')).toBe(
+      'https://ui.example.test/customer/services',
+    );
+    expect(mockedFetch).not.toHaveBeenCalled();
+  });
+
+  it('rewrites the public home page to the internal customer home page', async () => {
+    const res = await proxy(createProxyRequest('/'));
+
+    expect(res.headers.get('x-middleware-rewrite')).toBe(
+      'https://ui.example.test/customer',
+    );
+    expect(mockedFetch).not.toHaveBeenCalled();
   });
 
   it('redirects authenticated users away from login', async () => {
@@ -148,6 +184,91 @@ describe('auth proxy', () => {
     );
     expect(res.headers.get('set-cookie')).toContain(
       'refreshToken=new-refresh-token',
+    );
+  });
+
+  it('redirects unauthenticated staff routes to staff login', async () => {
+    const res = await proxy(createProxyRequest('/staff/dashboard'));
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe(
+      'https://ui.example.test/staff/login?next=%2Fstaff%2Fdashboard',
+    );
+    expect(res.headers.get('set-cookie')).toContain('accessToken=');
+    expect(res.headers.get('set-cookie')).toContain('refreshToken=');
+  });
+
+  it('redirects unauthenticated staff subdomain routes to clean staff login', async () => {
+    const res = await proxy(
+      createProxyRequest('/dashboard', {}, 'staff.example.test'),
+    );
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe(
+      'https://staff.example.test/login?next=%2Fdashboard',
+    );
+    expect(res.headers.get('set-cookie')).toContain('accessToken=');
+    expect(res.headers.get('set-cookie')).toContain('refreshToken=');
+  });
+
+  it('redirects authenticated staff login visits to the staff dashboard', async () => {
+    const validToken = createJwt({
+      exp: Math.floor(Date.now() / 1000) + 60,
+      tokenType: 'access',
+    });
+
+    const res = await proxy(
+      createProxyRequest('/staff/login', {
+        accessToken: validToken,
+      }),
+    );
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe(
+      'https://ui.example.test/staff/dashboard?next=%2Fstaff%2Flogin',
+    );
+  });
+
+  it('redirects authenticated staff subdomain login visits to the clean dashboard path', async () => {
+    const validToken = createJwt({
+      exp: Math.floor(Date.now() / 1000) + 60,
+      tokenType: 'access',
+    });
+
+    const res = await proxy(
+      createProxyRequest(
+        '/login',
+        {
+          accessToken: validToken,
+        },
+        'staff.example.test',
+      ),
+    );
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe(
+      'https://staff.example.test/dashboard?next=%2Flogin',
+    );
+  });
+
+  it('rewrites authenticated staff subdomain routes to the internal staff folder', async () => {
+    const validToken = createJwt({
+      exp: Math.floor(Date.now() / 1000) + 60,
+      tokenType: 'access',
+    });
+
+    const res = await proxy(
+      createProxyRequest(
+        '/calendar',
+        {
+          accessToken: validToken,
+        },
+        'staff.example.test',
+      ),
+    );
+
+    expect(res.headers.get('x-middleware-rewrite')).toBe(
+      'https://staff.example.test/staff/calendar',
     );
   });
 });
