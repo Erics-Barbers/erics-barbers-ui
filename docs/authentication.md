@@ -28,7 +28,7 @@ NestJS owns backend auth behavior:
 The BFF stores two cookies:
 
 - `accessToken`: HttpOnly, SameSite=Lax, 15 minute lifetime.
-- `refreshToken`: HttpOnly, SameSite=Lax, 7 day lifetime.
+- `refreshToken`: HttpOnly, SameSite=Lax, 12 hour lifetime by default, or 7 days when the user selects "keep me signed in".
 
 Client components should not read these cookies. They are intentionally HttpOnly.
 
@@ -39,7 +39,9 @@ The browser posts to:
 - `POST /api/auth/login`
 - `POST /api/auth/verify-email`
 
-The Next.js route handler forwards the request to NestJS, receives `accessToken` and `refreshToken`, sets HttpOnly cookies, and returns a small success response to the browser.
+The Next.js route handler forwards the request to NestJS, receives `accessToken`, `refreshToken`, and `refreshMaxAgeSeconds`, sets HttpOnly cookies, and returns a small success response to the browser.
+
+The login form sends `rememberMe`. When it is false, the backend issues a shorter refresh session. When it is true, the backend issues the longer "keep me signed in" refresh session. The BFF does not choose this duration itself; it uses `refreshMaxAgeSeconds` from the API response.
 
 If login returns `code: MFA_REQUIRED`, the route handler does not set auth cookies. The login page asks for the email code and then posts to `POST /api/auth/verify-mfa`. Only successful MFA verification sets the `accessToken` and `refreshToken` cookies.
 
@@ -58,7 +60,7 @@ When the access token is missing or expired, server-side UI auth code can use th
 Refresh returns a rotated token pair. The BFF must set both cookies:
 
 - new `accessToken`
-- new `refreshToken`
+- new `refreshToken` using the returned `refreshMaxAgeSeconds`
 
 The current refresh behavior exists in:
 

@@ -38,15 +38,30 @@ function jsonResponse(body: unknown, init?: ResponseInit) {
   });
 }
 
+function createJwt(payload: Record<string, unknown>): string {
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString(
+    'base64url',
+  );
+  return `header.${encodedPayload}.signature`;
+}
+
 const mockedCookies = jest.mocked(cookies);
 const mockedFetch = jest.fn();
 
 describe('auth route handlers', () => {
   const originalFetch = global.fetch;
   const originalApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const originalStaffSiteUrl = process.env.NEXT_PUBLIC_STAFF_SITE_URL;
+  const originalTestStaffSiteUrl =
+    process.env.NEXT_PUBLIC_TEST_STAFF_SITE_URL;
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_API_BASE_URL = 'https://api.example.test';
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://ui.example.test';
+    process.env.NEXT_PUBLIC_STAFF_SITE_URL = 'https://staff.example.test';
+    process.env.NEXT_PUBLIC_TEST_STAFF_SITE_URL =
+      'https://test-staff.example.test';
     global.fetch = mockedFetch;
     mockedFetch.mockReset();
     mockedCookies.mockReset();
@@ -55,6 +70,10 @@ describe('auth route handlers', () => {
   afterAll(() => {
     global.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_BASE_URL = originalApiBaseUrl;
+    process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
+    process.env.NEXT_PUBLIC_STAFF_SITE_URL = originalStaffSiteUrl;
+    process.env.NEXT_PUBLIC_TEST_STAFF_SITE_URL =
+      originalTestStaffSiteUrl;
   });
 
   it('refreshes and retries profile when the access token is rejected', async () => {
@@ -72,6 +91,7 @@ describe('auth route handlers', () => {
         jsonResponse({
           accessToken: 'new-access-token',
           refreshToken: 'new-refresh-token',
+          refreshMaxAgeSeconds: 43_200,
         }),
       )
       .mockResolvedValueOnce(jsonResponse({ id: 'user-1' }));
@@ -113,6 +133,7 @@ describe('auth route handlers', () => {
     const setCookie = res.headers.get('set-cookie');
     expect(setCookie).toContain('accessToken=new-access-token');
     expect(setCookie).toContain('refreshToken=new-refresh-token');
+    expect(setCookie).toContain('Max-Age=43200');
   });
 
   it('clears both auth cookies when profile refresh fails', async () => {
@@ -206,6 +227,7 @@ describe('auth route handlers', () => {
         jsonResponse({
           accessToken: 'new-access-token',
           refreshToken: 'new-refresh-token',
+          refreshMaxAgeSeconds: 604_800,
         }),
       )
       .mockResolvedValueOnce(
@@ -275,6 +297,144 @@ describe('auth route handlers', () => {
     const setCookie = res.headers.get('set-cookie');
     expect(setCookie).toContain('accessToken=new-access-token');
     expect(setCookie).toContain('refreshToken=new-refresh-token');
+    expect(setCookie).toContain('Max-Age=604800');
+  });
+
+  it('sets auth cookies after login succeeds using the API refresh lifetime', async () => {
+    const cookieStore = createCookieStore();
+    mockedCookies.mockResolvedValue(cookieStore as never);
+    mockedFetch.mockResolvedValue(
+      jsonResponse({
+        accessToken: createJwt({
+          role: 'CUSTOMER',
+          tokenType: 'access',
+        }),
+        refreshToken: 'refresh-token',
+        refreshMaxAgeSeconds: 43_200,
+      }),
+    );
+
+    const res = await login(
+      new Request('https://ui.example.test/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: 'https://ui.example.test',
+        },
+        body: JSON.stringify({
+          email: 'user@example.com',
+          password: 'Password1',
+          rememberMe: false,
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      message: 'Logged in',
+      redirectTo: '/my-account',
+      role: 'CUSTOMER',
+    });
+    expect(mockedFetch).toHaveBeenCalledWith(
+      'https://api.example.test/auth/login',
+      expect.objectContaining({
+        body: JSON.stringify({
+          email: 'user@example.com',
+          password: 'Password1',
+          rememberMe: false,
+        }),
+      }),
+    );
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      'accessToken',
+      createJwt({
+        role: 'CUSTOMER',
+        tokenType: 'access',
+      }),
+      expect.objectContaining({ maxAge: 60 * 15 }),
+    );
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      'refreshToken',
+      'refresh-token',
+      expect.objectContaining({ maxAge: 43_200 }),
+    );
+  });
+
+  it('returns the staff dashboard URL after barber login on the customer domain', async () => {
+    const cookieStore = createCookieStore();
+    const accessToken = createJwt({
+      role: 'BARBER',
+      tokenType: 'access',
+    });
+
+    mockedCookies.mockResolvedValue(cookieStore as never);
+    mockedFetch.mockResolvedValue(
+      jsonResponse({
+        accessToken,
+        refreshToken: 'refresh-token',
+        refreshMaxAgeSeconds: 43_200,
+      }),
+    );
+
+    const res = await login(
+      new Request('https://ui.example.test/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: 'https://ui.example.test',
+        },
+        body: JSON.stringify({
+          email: 'barber@example.com',
+          password: 'Password1',
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      message: 'Logged in',
+      redirectTo: 'https://staff.example.test/dashboard',
+      role: 'BARBER',
+    });
+  });
+
+  it('returns a clean staff dashboard path after admin login on the staff domain', async () => {
+    const cookieStore = createCookieStore();
+    const accessToken = createJwt({
+      role: 'ADMIN',
+      tokenType: 'access',
+    });
+
+    mockedCookies.mockResolvedValue(cookieStore as never);
+    mockedFetch.mockResolvedValue(
+      jsonResponse({
+        accessToken,
+        refreshToken: 'refresh-token',
+        refreshMaxAgeSeconds: 43_200,
+      }),
+    );
+
+    const res = await login(
+      new Request('https://staff.example.test/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Host: 'staff.example.test',
+          Origin: 'https://staff.example.test',
+        },
+        body: JSON.stringify({
+          email: 'admin@example.com',
+          password: 'Password1',
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      message: 'Logged in',
+      redirectTo: '/dashboard',
+      role: 'ADMIN',
+    });
   });
 
   it('logs out locally even when the API logout call rejects', async () => {
@@ -375,10 +535,15 @@ describe('auth route handlers', () => {
   it('sets auth cookies after MFA verification succeeds', async () => {
     const cookieStore = createCookieStore();
     mockedCookies.mockResolvedValue(cookieStore as never);
+    const accessToken = createJwt({
+      role: 'CUSTOMER',
+      tokenType: 'access',
+    });
     mockedFetch.mockResolvedValue(
       jsonResponse({
-        accessToken: 'access-token',
+        accessToken,
         refreshToken: 'refresh-token',
+        refreshMaxAgeSeconds: 604_800,
       }),
     );
 
@@ -397,16 +562,20 @@ describe('auth route handlers', () => {
     );
 
     expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({ message: 'Logged in' });
+    await expect(res.json()).resolves.toEqual({
+      message: 'Logged in',
+      redirectTo: '/my-account',
+      role: 'CUSTOMER',
+    });
     expect(cookieStore.set).toHaveBeenCalledWith(
       'accessToken',
-      'access-token',
+      accessToken,
       expect.objectContaining({ maxAge: 60 * 15 }),
     );
     expect(cookieStore.set).toHaveBeenCalledWith(
       'refreshToken',
       'refresh-token',
-      expect.objectContaining({ maxAge: 60 * 60 * 24 * 7 }),
+      expect.objectContaining({ maxAge: 604_800 }),
     );
   });
 

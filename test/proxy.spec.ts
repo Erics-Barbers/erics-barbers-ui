@@ -94,6 +94,7 @@ describe('auth proxy', () => {
       jsonResponse({
         accessToken: 'new-access-token',
         refreshToken: 'new-refresh-token',
+        refreshMaxAgeSeconds: 43_200,
       }),
     );
 
@@ -122,6 +123,7 @@ describe('auth proxy', () => {
     expect(res.headers.get('set-cookie')).toContain(
       'refreshToken=new-refresh-token',
     );
+    expect(res.headers.get('set-cookie')).toContain('Max-Age=43200');
   });
 
   it('rewrites public customer routes to the internal customer folder', async () => {
@@ -166,6 +168,7 @@ describe('auth proxy', () => {
       jsonResponse({
         accessToken: 'new-access-token',
         refreshToken: 'new-refresh-token',
+        refreshMaxAgeSeconds: 604_800,
       }),
     );
 
@@ -185,6 +188,7 @@ describe('auth proxy', () => {
     expect(res.headers.get('set-cookie')).toContain(
       'refreshToken=new-refresh-token',
     );
+    expect(res.headers.get('set-cookie')).toContain('Max-Age=604800');
   });
 
   it('redirects unauthenticated staff routes to staff login', async () => {

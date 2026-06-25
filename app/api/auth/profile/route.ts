@@ -5,6 +5,7 @@ import { rejectCrossSiteRequest } from '../_utils/reject-cross-site-request';
 type RefreshResult = {
   accessToken: string;
   refreshToken: string;
+  refreshMaxAgeSeconds: number;
 };
 
 const accessTokenCookieOptions = {
@@ -20,7 +21,6 @@ const refreshTokenCookieOptions = {
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
   path: '/',
-  maxAge: 60 * 60 * 24 * 7,
 };
 
 function clearAuthCookies(res: NextResponse): NextResponse {
@@ -38,7 +38,10 @@ function setAuthCookies(res: NextResponse, tokens: RefreshResult): NextResponse 
   res.cookies.set(
     'refreshToken',
     tokens.refreshToken,
-    refreshTokenCookieOptions,
+    {
+      ...refreshTokenCookieOptions,
+      maxAge: tokens.refreshMaxAgeSeconds,
+    },
   );
   return res;
 }
@@ -104,15 +107,21 @@ async function refreshAccessToken(
   const data = (await apiRes.json().catch(() => null)) as {
     accessToken?: string;
     refreshToken?: string;
+    refreshMaxAgeSeconds?: number;
   } | null;
 
-  if (!data?.accessToken || !data.refreshToken) {
+  if (
+    !data?.accessToken ||
+    !data.refreshToken ||
+    typeof data.refreshMaxAgeSeconds !== 'number'
+  ) {
     return null;
   }
 
   return {
     accessToken: data.accessToken,
     refreshToken: data.refreshToken,
+    refreshMaxAgeSeconds: data.refreshMaxAgeSeconds,
   };
 }
 

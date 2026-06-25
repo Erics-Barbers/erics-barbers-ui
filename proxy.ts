@@ -11,6 +11,7 @@ type JwtPayload = {
 type RefreshResult = {
   accessToken: string;
   refreshToken: string;
+  refreshMaxAgeSeconds: number;
 };
 
 type RouteSurface = 'customer' | 'staff';
@@ -272,15 +273,21 @@ async function refreshAccessToken(
   const data = (await apiRes.json().catch(() => null)) as {
     accessToken?: string;
     refreshToken?: string;
+    refreshMaxAgeSeconds?: number;
   } | null;
 
-  if (!data?.accessToken || !data.refreshToken) {
+  if (
+    !data?.accessToken ||
+    !data.refreshToken ||
+    typeof data.refreshMaxAgeSeconds !== 'number'
+  ) {
     return null;
   }
 
   return {
     accessToken: data.accessToken,
     refreshToken: data.refreshToken,
+    refreshMaxAgeSeconds: data.refreshMaxAgeSeconds,
   };
 }
 
@@ -298,7 +305,7 @@ function setAuthCookies(res: NextResponse, tokens: RefreshResult) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: tokens.refreshMaxAgeSeconds,
   });
 }
 

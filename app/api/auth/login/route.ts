@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { rejectCrossSiteRequest } from '../_utils/reject-cross-site-request';
+import { createLoginSuccessBody } from '../_utils/access-token-redirect';
 
 type AuthErrorResponse = {
   message?: string | string[];
@@ -9,6 +10,7 @@ type AuthErrorResponse = {
 type LoginResponseBody = {
   accessToken: string;
   refreshToken: string;
+  refreshMaxAgeSeconds: number;
 };
 
 type LoginMfaRequiredResponseBody = {
@@ -75,8 +77,10 @@ export async function POST(req: Request) {
     secure,
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: data.refreshMaxAgeSeconds,
   });
 
-  return NextResponse.json({ message: 'Logged in' }, { status: 200 });
+  return NextResponse.json(createLoginSuccessBody(data.accessToken, req), {
+    status: 200,
+  });
 }
