@@ -35,6 +35,7 @@ const staffRoutePrefixes = [
   '/calendar',
   '/customers',
   '/dashboard',
+  '/login',
   '/settings',
 ] as const;
 

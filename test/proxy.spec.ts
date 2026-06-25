@@ -211,6 +211,17 @@ describe('auth proxy', () => {
     expect(res.headers.get('set-cookie')).toContain('refreshToken=');
   });
 
+  it('rewrites staff localhost login to the internal staff login page', async () => {
+    const res = await proxy(
+      createProxyRequest('/login', {}, 'staff.localhost'),
+    );
+
+    expect(res.headers.get('x-middleware-rewrite')).toBe(
+      'https://staff.localhost/staff/login',
+    );
+    expect(mockedFetch).not.toHaveBeenCalled();
+  });
+
   it('redirects authenticated staff login visits to the staff dashboard', async () => {
     const validToken = createJwt({
       exp: Math.floor(Date.now() / 1000) + 60,
