@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
 import { POST as login } from '../app/api/auth/login/route';
 import { POST as logout } from '../app/api/auth/logout/route';
+import { POST as requestPasswordReset } from '../app/api/auth/reset-password-email/route';
+import { POST as resetPassword } from '../app/api/auth/reset-password/route';
 import {
   GET as profile,
   PUT as updateProfile,
@@ -464,6 +466,80 @@ describe('auth route handlers', () => {
       'refreshToken',
       '',
       expect.objectContaining({ maxAge: 0 }),
+    );
+  });
+
+  it('requests a staff password reset email through the BFF', async () => {
+    mockedFetch.mockResolvedValue(
+      jsonResponse({
+        message: 'Password reset link sent to email if it exists',
+      }),
+    );
+
+    const res = await requestPasswordReset(
+      new Request('https://staff.example.test/api/auth/reset-password-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: 'https://staff.example.test',
+        },
+        body: JSON.stringify({
+          email: 'barber@example.com',
+          surface: 'STAFF',
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      message: 'Password reset link sent to email if it exists',
+    });
+    expect(mockedFetch).toHaveBeenCalledWith(
+      'https://api.example.test/auth/reset-password-email',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'barber@example.com',
+          surface: 'STAFF',
+        }),
+      },
+    );
+  });
+
+  it('forwards password reset submissions through the BFF', async () => {
+    mockedFetch.mockResolvedValue(
+      jsonResponse({ message: 'Password reset successfully' }),
+    );
+
+    const res = await resetPassword(
+      new Request('https://ui.example.test/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: 'https://ui.example.test',
+        },
+        body: JSON.stringify({
+          token: 'password-reset-token',
+          newPassword: 'NewPassword1',
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      message: 'Password reset successfully',
+    });
+    expect(mockedFetch).toHaveBeenCalledWith(
+      'https://api.example.test/auth/reset-password',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: 'password-reset-token',
+          newPassword: 'NewPassword1',
+        }),
+      },
     );
   });
 

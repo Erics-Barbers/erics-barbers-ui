@@ -5,10 +5,14 @@ export default function StaffLogin() {
   const customerLoginHref = process.env.NEXT_PUBLIC_SITE_URL
     ? `${process.env.NEXT_PUBLIC_SITE_URL}/login`
     : '/customer/login';
+  const forgotPasswordHref = process.env.NEXT_PUBLIC_STAFF_SITE_URL
+    ? `${process.env.NEXT_PUBLIC_STAFF_SITE_URL}/forgot-password`
+    : '/staff/forgot-password';
 
   return (
     <LoginFlow
       description="Sign in to view appointments, manage availability, and keep the shop schedule up to date."
+      forgotPasswordHref={forgotPasswordHref}
       footer={
         <>
           Customer account?{' '}

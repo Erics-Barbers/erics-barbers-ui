@@ -29,12 +29,14 @@ type MfaChallenge = {
 
 type LoginFlowProps = {
   description: string;
+  forgotPasswordHref: string;
   footer: React.ReactNode;
   title: string;
 };
 
 export default function LoginFlow({
   description,
+  forgotPasswordHref,
   footer,
   title,
 }: LoginFlowProps) {
@@ -144,7 +146,12 @@ export default function LoginFlow({
 
   return (
     <>
-      <AuthPageShell description={description} footer={footer} title={title}>
+      <AuthPageShell
+        description={description}
+        fixedCardHeight
+        footer={footer}
+        title={title}
+      >
         {mfaChallenge ? (
           <form className="flex flex-col gap-4" onSubmit={verifyMfa}>
             <p className="text-sm leading-6 text-zinc-400">
@@ -163,7 +170,11 @@ export default function LoginFlow({
             <AuthSubmitButton loading={submitting}>Verify code</AuthSubmitButton>
           </form>
         ) : (
-          <LoginForm submitting={submitting} onLogin={loginUser} />
+          <LoginForm
+            forgotPasswordHref={forgotPasswordHref}
+            submitting={submitting}
+            onLogin={loginUser}
+          />
         )}
       </AuthPageShell>
 

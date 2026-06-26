@@ -36,21 +36,31 @@ const staffRoutePrefixes = [
   '/calendar',
   '/customers',
   '/dashboard',
+  '/forgot-password',
   '/login',
+  '/reset-password',
   '/settings',
 ] as const;
 
 const publicCustomerRoutePrefixes = [
   '/bookings',
   '/email-verify',
+  '/forgot-password',
   '/information',
   '/login',
   '/my-account',
   '/privacy-policy',
   '/register',
+  '/reset-password',
   '/services',
   '/terms-of-service',
   '/verify-email',
+] as const;
+
+const publicStaffAuthRoutePrefixes = [
+  '/forgot-password',
+  '/login',
+  '/reset-password',
 ] as const;
 
 function pathStartsWithPrefix(pathname: string, prefix: string): boolean {
@@ -97,6 +107,15 @@ function isProtectedRoute(
   pathname: string,
   surface: RouteSurface,
 ): boolean {
+  if (
+    surface === 'staff' &&
+    publicStaffAuthRoutePrefixes.some((prefix) =>
+      pathStartsWithPrefix(pathname, prefix),
+    )
+  ) {
+    return false;
+  }
+
   if (surface === 'staff') {
     return (
       pathname === '/' ||
@@ -437,9 +456,11 @@ export const config = {
     '/my-account/:path*',
     '/bookings/:path*',
     '/email-verify/:path*',
+    '/forgot-password/:path*',
     '/information/:path*',
     '/privacy-policy/:path*',
     '/register/:path*',
+    '/reset-password/:path*',
     '/services/:path*',
     '/terms-of-service/:path*',
     '/verify-email/:path*',

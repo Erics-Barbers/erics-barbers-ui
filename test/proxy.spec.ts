@@ -135,6 +135,17 @@ describe('auth proxy', () => {
     expect(mockedFetch).not.toHaveBeenCalled();
   });
 
+  it('rewrites customer password reset routes to the internal customer folder', async () => {
+    const res = await proxy(
+      createProxyRequest('/reset-password?token=password-reset-token'),
+    );
+
+    expect(res.headers.get('x-middleware-rewrite')).toBe(
+      'https://ui.example.test/customer/reset-password?token=password-reset-token',
+    );
+    expect(mockedFetch).not.toHaveBeenCalled();
+  });
+
   it('rewrites the public home page to the internal customer home page', async () => {
     const res = await proxy(createProxyRequest('/'));
 
@@ -222,6 +233,21 @@ describe('auth proxy', () => {
 
     expect(res.headers.get('x-middleware-rewrite')).toBe(
       'https://staff.localhost/staff/login',
+    );
+    expect(mockedFetch).not.toHaveBeenCalled();
+  });
+
+  it('rewrites staff password reset routes to the internal staff folder', async () => {
+    const res = await proxy(
+      createProxyRequest(
+        '/reset-password?token=password-reset-token',
+        {},
+        'staff.example.test',
+      ),
+    );
+
+    expect(res.headers.get('x-middleware-rewrite')).toBe(
+      'https://staff.example.test/staff/reset-password?token=password-reset-token',
     );
     expect(mockedFetch).not.toHaveBeenCalled();
   });

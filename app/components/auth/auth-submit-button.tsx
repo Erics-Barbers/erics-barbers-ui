@@ -3,15 +3,18 @@ import type React from 'react';
 
 type AuthSubmitButtonProps = {
   children: React.ReactNode;
+  disabled?: boolean;
   loading?: boolean;
 };
 
 export default function AuthSubmitButton({
   children,
+  disabled,
   loading,
 }: AuthSubmitButtonProps) {
   return (
     <Button
+      disabled={disabled}
       fullWidth
       loading={loading}
       type="submit"

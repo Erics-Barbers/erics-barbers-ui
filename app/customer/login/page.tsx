@@ -4,7 +4,8 @@ import LoginFlow from '@/app/components/auth/login-flow';
 export default function Login() {
   return (
     <LoginFlow
-      description="Manage your bookings and keep your appointment details in one place."
+      description="Sign in to manage bookings and appointment details."
+      forgotPasswordHref="/forgot-password"
       footer={
         <>
           Don&apos;t have an account?{' '}
@@ -16,7 +17,7 @@ export default function Login() {
           </Link>
         </>
       }
-      title="Log in to your account"
+      title="Customer login"
     />
   );
 }

@@ -1,9 +1,11 @@
 import AuthSubmitButton from '@/app/components/auth/auth-submit-button';
 import AuthTextField from '@/app/components/auth/auth-text-field';
+import Link from 'next/link';
 import Form from 'next/form';
 import React from 'react';
 
 interface LoginFormProps {
+  forgotPasswordHref: string;
   onLogin: (email: string, password: string, rememberMe: boolean) => void;
   submitting?: boolean;
 }
@@ -46,6 +48,12 @@ export default function LoginForm(props: LoginFormProps) {
         />
         Keep me signed in
       </label>
+      <Link
+        className="self-start text-sm font-medium text-zinc-50 underline underline-offset-4"
+        href={props.forgotPasswordHref}
+      >
+        Forgot password?
+      </Link>
       <AuthSubmitButton loading={props.submitting}>Log in</AuthSubmitButton>
     </Form>
   );

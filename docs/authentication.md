@@ -53,6 +53,22 @@ NEXT_PUBLIC_AUTH_EXTERNAL_PROVIDERS_ENABLED=true
 
 No external provider login flow is implemented yet.
 
+## Password Reset
+
+Customer and staff login views expose a password reset flow through the BFF:
+
+- `POST /api/auth/reset-password-email`
+- `POST /api/auth/reset-password`
+
+The forgot-password form sends the user email and a reset surface:
+
+- customer forms send `CUSTOMER`
+- staff forms send `STAFF`
+
+The API uses that surface to choose a configured reset-link base URL. Staff reset emails therefore point to the staff site when `STAFF_CLIENT_BASE_URL` is configured on the API.
+
+The reset email request always shows a generic success message so the UI does not reveal whether an email is registered.
+
 ## Refresh
 
 When the access token is missing or expired, server-side UI auth code can use the refresh cookie to call NestJS `POST /auth/refresh`.
