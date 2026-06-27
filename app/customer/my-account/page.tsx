@@ -5,9 +5,14 @@ import {
   Button,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
 } from '@mui/material';
-import { Logout, Save, VerifiedUser } from '@mui/icons-material';
+import { DeleteForever, Logout, Save, VerifiedUser } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import Notification, { NotificationType } from '@/app/components/notification';
@@ -31,6 +36,8 @@ export default function MyAccount() {
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [loggingOut, setLoggingOut] = React.useState(false);
+  const [deletingAccount, setDeletingAccount] = React.useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const router = useRouter();
 
@@ -132,6 +139,31 @@ export default function MyAccount() {
     } finally {
       setLoggingOut(false);
       router.replace('/');
+    }
+  };
+
+  const deleteAccount = async () => {
+    setDeletingAccount(true);
+
+    try {
+      const res = await fetch('/api/auth/account', {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        throw new Error(`Account deletion failed with status ${res.status}`);
+      }
+
+      router.replace('/');
+    } catch (error) {
+      console.error('Account deletion failed:', error);
+      setNotice({
+        type: 'error',
+        message: 'Could not delete your account.',
+      });
+    } finally {
+      setDeletingAccount(false);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -250,6 +282,35 @@ export default function MyAccount() {
                 </div>
               </dl>
             </aside>
+
+            <section className="rounded-2xl border border-red-500/40 bg-zinc-950 p-5 md:p-6 lg:col-span-2">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-xl font-medium text-red-200">
+                    Delete account
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-300">
+                    This disables your login, anonymizes your personal details,
+                    and keeps historical booking records for business reporting.
+                  </p>
+                </div>
+                <Button
+                  color="error"
+                  startIcon={<DeleteForever />}
+                  variant="outlined"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  sx={{
+                    alignSelf: { xs: 'flex-start', md: 'center' },
+                    borderRadius: '9999px',
+                    minHeight: 44,
+                    paddingInline: 3,
+                    textTransform: 'none',
+                  }}
+                >
+                  Delete account
+                </Button>
+              </div>
+            </section>
           </section>
         ) : (
           <Alert severity="error">Could not load your account details.</Alert>
@@ -262,6 +323,38 @@ export default function MyAccount() {
         type={notice?.type ?? 'info'}
         onClose={() => setNotice(null)}
       />
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          if (!deletingAccount) setDeleteDialogOpen(false);
+        }}
+      >
+        <DialogTitle>Delete account?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Your login will be disabled and your personal details will be
+            anonymized. Existing booking records will remain for operational
+            and reporting purposes.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            disabled={deletingAccount}
+            onClick={() => setDeleteDialogOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            loading={deletingAccount}
+            onClick={deleteAccount}
+            variant="contained"
+          >
+            Delete account
+          </Button>
+        </DialogActions>
+      </Dialog>
     </main>
   );
 }

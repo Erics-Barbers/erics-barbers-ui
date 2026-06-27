@@ -79,6 +79,18 @@ The route handler forwards the refresh token to NestJS when available, but local
 
 The account page redirects to the homepage after a logout click regardless of the backend logout result. Backend logout is also idempotent, so missing or already-invalid refresh tokens still produce a successful API logout response.
 
+## Account Deletion
+
+The `/my-account` page exposes account deletion through the BFF:
+
+```text
+DELETE /api/auth/account
+```
+
+The route handler forwards the request to NestJS, participates in refresh-token retry if the access token has expired, and clears local auth cookies after deletion.
+
+Deletion is not a hard delete. The API anonymizes the user, revokes sessions, disables login, and preserves historical booking records for operational reporting. This lets barber reports count bookings and earnings over a period without retaining customer-identifying details.
+
 ## Protected Routes
 
 The proxy protects these route prefixes:

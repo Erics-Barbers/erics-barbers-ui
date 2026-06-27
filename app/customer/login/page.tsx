@@ -24,9 +24,30 @@ type MfaChallenge = {
   method: string;
 };
 
+const DEFAULT_LOGIN_ERROR =
+  'We could not sign you in with those details. Check your email and password, or reset your password if you are unsure.';
+const RATE_LIMIT_LOGIN_ERROR =
+  'Too many sign-in attempts. Wait a minute, then try again.';
+const SERVICE_LOGIN_ERROR =
+  'We could not reach sign-in right now. Try again shortly.';
+const MFA_VERIFICATION_ERROR =
+  'That verification code did not work or has expired. Check the latest email and try again.';
+
+class UserFacingAuthError extends Error {}
+
+function getLoginErrorMessage(status: number) {
+  if (status === 429) return RATE_LIMIT_LOGIN_ERROR;
+  if (status >= 500) return SERVICE_LOGIN_ERROR;
+  return DEFAULT_LOGIN_ERROR;
+}
+
+function getUserFacingErrorMessage(error: unknown, fallback: string) {
+  return error instanceof UserFacingAuthError ? error.message : fallback;
+}
+
 export default function Login() {
   const [submitting, setSubmitting] = React.useState(false);
-  const [error, setError] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [mfaChallenge, setMfaChallenge] = React.useState<MfaChallenge | null>(
     null,
   );
@@ -35,7 +56,7 @@ export default function Login() {
 
   const loginUser = async (email: string, password: string) => {
     setSubmitting(true);
-    setError(false);
+    setErrorMessage(null);
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -55,7 +76,7 @@ export default function Login() {
           return;
         }
 
-        throw new Error(`Login failed with status ${res.status}`);
+        throw new UserFacingAuthError(getLoginErrorMessage(res.status));
       }
 
       const data = (await res
@@ -73,7 +94,7 @@ export default function Login() {
       router.push('/my-account');
     } catch (e) {
       console.error('Login failed:', e);
-      setError(true);
+      setErrorMessage(getUserFacingErrorMessage(e, SERVICE_LOGIN_ERROR));
     } finally {
       setSubmitting(false);
     }
@@ -84,7 +105,7 @@ export default function Login() {
     if (!mfaChallenge) return;
 
     setSubmitting(true);
-    setError(false);
+    setErrorMessage(null);
 
     try {
       const res = await fetch('/api/auth/verify-mfa', {
@@ -97,13 +118,13 @@ export default function Login() {
       });
 
       if (!res.ok) {
-        throw new Error(`MFA verification failed with status ${res.status}`);
+        throw new UserFacingAuthError(MFA_VERIFICATION_ERROR);
       }
 
       router.push('/my-account');
     } catch (e) {
       console.error('MFA verification failed:', e);
-      setError(true);
+      setErrorMessage(getUserFacingErrorMessage(e, MFA_VERIFICATION_ERROR));
     } finally {
       setSubmitting(false);
     }
@@ -149,11 +170,11 @@ export default function Login() {
       </AuthPageShell>
 
       <Notification
-        message="Login failed. Please try again."
-        open={error}
+        message={errorMessage ?? ''}
+        open={Boolean(errorMessage)}
         type="error"
         onClose={() => {
-          setError(false);
+          setErrorMessage(null);
         }}
       />
     </>

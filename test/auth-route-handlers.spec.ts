@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { POST as login } from '../app/api/auth/login/route';
+import { DELETE as deleteAccount } from '../app/api/auth/account/route';
 import { POST as logout } from '../app/api/auth/logout/route';
 import {
   GET as profile,
@@ -305,6 +306,96 @@ describe('auth route handlers', () => {
       '',
       expect.objectContaining({ maxAge: 0 }),
     );
+  });
+
+  it('deletes an account through the BFF and clears auth cookies', async () => {
+    mockedCookies.mockResolvedValue(
+      createCookieStore({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      }) as never,
+    );
+    mockedFetch.mockResolvedValue(
+      jsonResponse({ message: 'Account deleted successfully' }),
+    );
+
+    const res = await deleteAccount(
+      new Request('https://ui.example.test/api/auth/account', {
+        method: 'DELETE',
+        headers: { Origin: 'https://ui.example.test' },
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      message: 'Account deleted successfully',
+    });
+    expect(mockedFetch).toHaveBeenCalledWith(
+      'https://api.example.test/auth/account',
+      {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer access-token' },
+      },
+    );
+    const setCookie = res.headers.get('set-cookie');
+    expect(setCookie).toContain('accessToken=');
+    expect(setCookie).toContain('refreshToken=');
+    expect(setCookie).toContain('Max-Age=0');
+  });
+
+  it('refreshes and retries account deletion when the access token is rejected', async () => {
+    mockedCookies.mockResolvedValue(
+      createCookieStore({
+        accessToken: 'old-access-token',
+        refreshToken: 'old-refresh-token',
+      }) as never,
+    );
+    mockedFetch
+      .mockResolvedValueOnce(
+        jsonResponse({ message: 'expired' }, { status: 401 }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          accessToken: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+          refreshMaxAgeSeconds: 43_200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ message: 'Account deleted successfully' }),
+      );
+
+    const res = await deleteAccount(
+      new Request('https://ui.example.test/api/auth/account', {
+        method: 'DELETE',
+        headers: {
+          Origin: 'https://ui.example.test',
+          'User-Agent': 'jest-agent',
+        },
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedFetch).toHaveBeenNthCalledWith(
+      2,
+      'https://api.example.test/auth/refresh',
+      {
+        method: 'POST',
+        headers: {
+          Cookie: 'refreshToken=old-refresh-token',
+          'User-Agent': 'jest-agent',
+        },
+      },
+    );
+    expect(mockedFetch).toHaveBeenNthCalledWith(
+      3,
+      'https://api.example.test/auth/account',
+      {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer new-access-token' },
+      },
+    );
+    expect(res.headers.get('set-cookie')).toContain('Max-Age=0');
   });
 
   it('returns a stable code when login fails because email is unverified', async () => {
