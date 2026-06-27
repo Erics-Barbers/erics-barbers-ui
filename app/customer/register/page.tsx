@@ -13,13 +13,13 @@ export default function Register() {
   const [errorMessage, setErrorMessage] = React.useState('');
   const router = useRouter();
 
-  const registerUser = async (email: string, password: string) => {
+  const registerUser = async (name: string, email: string, password: string) => {
     setSubmitting(true);
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password }),
       });
 
       if (!res.ok) {
