@@ -9,6 +9,7 @@ type AuthErrorResponse = {
 type LoginResponseBody = {
   accessToken: string;
   refreshToken: string;
+  refreshMaxAgeSeconds?: number;
 };
 
 type LoginMfaRequiredResponseBody = {
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
     secure,
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: data.refreshMaxAgeSeconds ?? 60 * 60 * 24 * 7,
   });
 
   return NextResponse.json({ message: 'Logged in' }, { status: 200 });

@@ -5,6 +5,7 @@ import { rejectCrossSiteRequest } from '../_utils/reject-cross-site-request';
 type VerifyMfaResponse = {
   accessToken: string;
   refreshToken: string;
+  refreshMaxAgeSeconds?: number;
 };
 
 export async function POST(req: Request) {
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
     secure,
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: data.refreshMaxAgeSeconds ?? 60 * 60 * 24 * 7,
   });
 
   return NextResponse.json({ message: 'Logged in' }, { status: 200 });

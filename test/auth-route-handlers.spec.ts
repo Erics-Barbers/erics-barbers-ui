@@ -425,6 +425,56 @@ describe('auth route handlers', () => {
     });
   });
 
+  it('forwards rememberMe and uses the API refresh lifetime on successful login', async () => {
+    const cookieStore = createCookieStore();
+    mockedCookies.mockResolvedValue(cookieStore as never);
+    mockedFetch.mockResolvedValue(
+      jsonResponse({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        refreshMaxAgeSeconds: 43_200,
+      }),
+    );
+
+    const res = await login(
+      new Request('https://ui.example.test/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: 'https://ui.example.test',
+        },
+        body: JSON.stringify({
+          email: 'user@example.com',
+          password: 'Password1',
+          rememberMe: false,
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ message: 'Logged in' });
+    expect(mockedFetch).toHaveBeenCalledWith(
+      'https://api.example.test/auth/login',
+      expect.objectContaining({
+        body: JSON.stringify({
+          email: 'user@example.com',
+          password: 'Password1',
+          rememberMe: false,
+        }),
+      }),
+    );
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      'accessToken',
+      'access-token',
+      expect.objectContaining({ maxAge: 60 * 15 }),
+    );
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      'refreshToken',
+      'refresh-token',
+      expect.objectContaining({ maxAge: 43_200 }),
+    );
+  });
+
   it('returns MFA_REQUIRED without setting cookies when login requires MFA', async () => {
     const cookieStore = createCookieStore();
     mockedCookies.mockResolvedValue(cookieStore as never);
@@ -470,6 +520,7 @@ describe('auth route handlers', () => {
       jsonResponse({
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
+        refreshMaxAgeSeconds: 43_200,
       }),
     );
 
@@ -497,7 +548,7 @@ describe('auth route handlers', () => {
     expect(cookieStore.set).toHaveBeenCalledWith(
       'refreshToken',
       'refresh-token',
-      expect.objectContaining({ maxAge: 60 * 60 * 24 * 7 }),
+      expect.objectContaining({ maxAge: 43_200 }),
     );
   });
 

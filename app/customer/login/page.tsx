@@ -45,6 +45,23 @@ function getUserFacingErrorMessage(error: unknown, fallback: string) {
   return error instanceof UserFacingAuthError ? error.message : fallback;
 }
 
+function getSafeNextPath(): string | null {
+  if (typeof window === 'undefined') return null;
+
+  const nextPath = new URLSearchParams(window.location.search).get('next');
+  if (!nextPath || !nextPath.startsWith('/') || nextPath.startsWith('//')) {
+    return null;
+  }
+
+  try {
+    const url = new URL(nextPath, window.location.origin);
+    if (url.origin !== window.location.origin) return null;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
+}
+
 export default function Login() {
   const [submitting, setSubmitting] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -54,7 +71,15 @@ export default function Login() {
   const [mfaCode, setMfaCode] = React.useState('');
   const router = useRouter();
 
-  const loginUser = async (email: string, password: string) => {
+  const redirectAfterLogin = () => {
+    router.push(getSafeNextPath() ?? '/my-account');
+  };
+
+  const loginUser = async (
+    email: string,
+    password: string,
+    rememberMe: boolean,
+  ) => {
     setSubmitting(true);
     setErrorMessage(null);
 
@@ -62,7 +87,7 @@ export default function Login() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
       });
 
       if (!res.ok) {
@@ -91,7 +116,7 @@ export default function Login() {
         return;
       }
 
-      router.push('/my-account');
+      redirectAfterLogin();
     } catch (e) {
       console.error('Login failed:', e);
       setErrorMessage(getUserFacingErrorMessage(e, SERVICE_LOGIN_ERROR));
@@ -121,7 +146,7 @@ export default function Login() {
         throw new UserFacingAuthError(MFA_VERIFICATION_ERROR);
       }
 
-      router.push('/my-account');
+      redirectAfterLogin();
     } catch (e) {
       console.error('MFA verification failed:', e);
       setErrorMessage(getUserFacingErrorMessage(e, MFA_VERIFICATION_ERROR));
@@ -149,6 +174,14 @@ export default function Login() {
       >
         {mfaChallenge ? (
           <form className="flex flex-col gap-4" onSubmit={verifyMfa}>
+            {errorMessage ? (
+              <div
+                className="rounded-lg border border-red-400/30 bg-red-950/40 px-3 py-2 text-sm leading-6 text-red-100"
+                role="alert"
+              >
+                {errorMessage}
+              </div>
+            ) : null}
             <p className="text-sm leading-6 text-zinc-400">
               Enter the verification code for your {mfaChallenge.method}{' '}
               authentication.
@@ -165,7 +198,11 @@ export default function Login() {
             <AuthSubmitButton loading={submitting}>Verify code</AuthSubmitButton>
           </form>
         ) : (
-          <LoginForm submitting={submitting} onLogin={loginUser} />
+          <LoginForm
+            errorMessage={errorMessage}
+            submitting={submitting}
+            onLogin={loginUser}
+          />
         )}
       </AuthPageShell>
 
