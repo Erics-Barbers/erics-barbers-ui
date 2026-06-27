@@ -17,9 +17,7 @@ type RouteSurface = 'customer' | 'staff';
 
 const protectedRoutePrefixes = [
   '/my-account',
-  '/bookings',
   '/customer/my-account',
-  '/customer/bookings',
   '/admin',
   '/barber',
   '/dashboard',

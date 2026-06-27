@@ -72,15 +72,12 @@ describe('auth proxy', () => {
       originalTestStaffSiteUrl;
   });
 
-  it('redirects unauthenticated protected routes to login with next path', async () => {
+  it('rewrites unauthenticated customer bookings routes without requiring login', async () => {
     const res = await proxy(createProxyRequest('/bookings'));
 
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe(
-      'https://ui.example.test/login?next=%2Fbookings',
+    expect(res.headers.get('x-middleware-rewrite')).toBe(
+      'https://ui.example.test/customer/bookings',
     );
-    expect(res.headers.get('set-cookie')).toContain('accessToken=');
-    expect(res.headers.get('set-cookie')).toContain('refreshToken=');
     expect(mockedFetch).not.toHaveBeenCalled();
   });
 
@@ -98,14 +95,14 @@ describe('auth proxy', () => {
     );
 
     const res = await proxy(
-      createProxyRequest('/bookings/new-booking', {
+      createProxyRequest('/my-account', {
         accessToken: expiredToken,
         refreshToken: 'old-refresh-token',
       }),
     );
 
     expect(res.headers.get('x-middleware-rewrite')).toBe(
-      'https://ui.example.test/customer/bookings/new-booking',
+      'https://ui.example.test/customer/my-account',
     );
     expect(mockedFetch).toHaveBeenCalledWith(
       'https://api.example.test/auth/refresh',
@@ -206,6 +203,19 @@ describe('auth proxy', () => {
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toBe(
       'https://staff.example.test/login?next=%2Fdashboard',
+    );
+    expect(res.headers.get('set-cookie')).toContain('accessToken=');
+    expect(res.headers.get('set-cookie')).toContain('refreshToken=');
+  });
+
+  it('still protects bookings on the staff surface', async () => {
+    const res = await proxy(
+      createProxyRequest('/bookings', {}, 'staff.example.test'),
+    );
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe(
+      'https://staff.example.test/login?next=%2Fbookings',
     );
     expect(res.headers.get('set-cookie')).toContain('accessToken=');
     expect(res.headers.get('set-cookie')).toContain('refreshToken=');
