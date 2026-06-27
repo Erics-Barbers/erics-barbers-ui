@@ -192,7 +192,7 @@ export default function RegisterForm(props: RegisterFormProps) {
         value={confirmPassword}
       />
       <AuthSubmitButton disabled={!canSubmit} loading={props.submitting}>
-        Register
+        Register for free
       </AuthSubmitButton>
     </Form>
   );
