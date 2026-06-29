@@ -56,6 +56,17 @@ type Notice = {
   type: 'error' | 'success';
 };
 
+type BookingDraft = {
+  customerEmail: string;
+  customerName: string;
+  customerPhone: string;
+  selectedBarberId: string;
+  selectedDate: string;
+  selectedServiceId: string;
+  selectedSlotStartTime?: string;
+};
+
+const BOOKING_DRAFT_KEY = 'pendingBookingDraft';
 const today = new Date().toISOString().slice(0, 10);
 
 function formatPrice(pricePence: number) {
@@ -70,6 +81,10 @@ function formatBookingTime(date: string) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(date));
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 async function readJson<T>(res: Response): Promise<T> {
@@ -103,9 +118,16 @@ export function BookingFlow() {
     null,
   );
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [accountExistsForEmail, setAccountExistsForEmail] = useState(false);
+  const [dismissedAccountPromptEmail, setDismissedAccountPromptEmail] =
+    useState('');
   const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [isCheckingAccount, setIsCheckingAccount] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [restoredSlotStartTime, setRestoredSlotStartTime] = useState<
+    string | null
+  >(null);
 
   const selectedBarber = useMemo(
     () => barbers.find((barber) => barber.id === selectedBarberId),
@@ -159,6 +181,26 @@ export function BookingFlow() {
   }, []);
 
   useEffect(() => {
+    const draft = sessionStorage.getItem(BOOKING_DRAFT_KEY);
+    if (!draft) return;
+
+    try {
+      const parsed = JSON.parse(draft) as Partial<BookingDraft>;
+
+      setCustomerEmail(parsed.customerEmail ?? '');
+      setCustomerName(parsed.customerName ?? '');
+      setCustomerPhone(parsed.customerPhone ?? '');
+      setSelectedBarberId(parsed.selectedBarberId ?? '');
+      setSelectedDate(parsed.selectedDate ?? today);
+      setSelectedServiceId(parsed.selectedServiceId ?? '');
+      setRestoredSlotStartTime(parsed.selectedSlotStartTime ?? null);
+      sessionStorage.removeItem(BOOKING_DRAFT_KEY);
+    } catch {
+      sessionStorage.removeItem(BOOKING_DRAFT_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
 
     async function loadSlots() {
@@ -180,6 +222,18 @@ export function BookingFlow() {
         if (!isMounted) return;
 
         setAvailability(data);
+
+        if (restoredSlotStartTime) {
+          const restoredSlot = data.slots.find(
+            (slot) => slot.startTime === restoredSlotStartTime,
+          );
+
+          if (restoredSlot) {
+            setSelectedSlot(restoredSlot);
+          }
+
+          setRestoredSlotStartTime(null);
+        }
       } catch (error) {
         if (!isMounted) return;
         setAvailability(null);
@@ -200,7 +254,52 @@ export function BookingFlow() {
     return () => {
       isMounted = false;
     };
-  }, [selectedBarberId, selectedDate]);
+  }, [restoredSlotStartTime, selectedBarberId, selectedDate]);
+
+  async function checkAccountForEmail() {
+    const normalizedEmail = customerEmail.trim().toLowerCase();
+
+    setAccountExistsForEmail(false);
+
+    if (
+      !normalizedEmail ||
+      !isValidEmail(normalizedEmail) ||
+      dismissedAccountPromptEmail === normalizedEmail
+    ) {
+      return;
+    }
+
+    setIsCheckingAccount(true);
+
+    try {
+      const res = await fetch('/api/auth/account-lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      const data = await readJson<{ exists?: boolean }>(res);
+
+      setAccountExistsForEmail(Boolean(data.exists));
+    } catch {
+      setAccountExistsForEmail(false);
+    } finally {
+      setIsCheckingAccount(false);
+    }
+  }
+
+  function saveDraftForLogin() {
+    const draft: BookingDraft = {
+      customerEmail,
+      customerName,
+      customerPhone,
+      selectedBarberId,
+      selectedDate,
+      selectedServiceId,
+      selectedSlotStartTime: selectedSlot?.startTime,
+    };
+
+    sessionStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(draft));
+  }
 
   async function createBooking() {
     if (!selectedBarberId || !selectedSlot || !selectedServiceId) return;
@@ -464,7 +563,11 @@ export function BookingFlow() {
                   <input
                     className="mt-2 h-11 w-full rounded-lg border border-white/15 bg-black px-3 text-zinc-50 outline-none focus:border-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={!selectedServiceId}
-                    onChange={(event) => setCustomerEmail(event.target.value)}
+                    onChange={(event) => {
+                      setCustomerEmail(event.target.value);
+                      setAccountExistsForEmail(false);
+                    }}
+                    onBlur={checkAccountForEmail}
                     type="email"
                     value={customerEmail}
                   />
@@ -480,6 +583,40 @@ export function BookingFlow() {
                   />
                 </label>
               </div>
+              {isCheckingAccount ? (
+                <p className="mt-3 text-xs text-zinc-500">
+                  Checking account status.
+                </p>
+              ) : null}
+              {accountExistsForEmail ? (
+                <div className="mt-4 rounded-lg border border-white/15 bg-black px-4 py-3 text-sm text-zinc-300">
+                  <p>
+                    This email may already have an account. Sign in to save this
+                    booking to your account and track it more easily.
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <Link
+                      className="inline-flex h-9 items-center justify-center rounded-full bg-zinc-50 px-4 text-sm font-medium text-black transition-colors hover:bg-zinc-300"
+                      href={`/login?next=${encodeURIComponent('/bookings/new-booking')}`}
+                      onClick={saveDraftForLogin}
+                    >
+                      Sign in
+                    </Link>
+                    <button
+                      className="inline-flex h-9 items-center justify-center rounded-full border border-white/15 px-4 text-sm font-medium text-zinc-50 transition-colors hover:bg-white/10"
+                      onClick={() => {
+                        setDismissedAccountPromptEmail(
+                          customerEmail.trim().toLowerCase(),
+                        );
+                        setAccountExistsForEmail(false);
+                      }}
+                      type="button"
+                    >
+                      Continue as guest
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </section>
           </div>
         </section>
