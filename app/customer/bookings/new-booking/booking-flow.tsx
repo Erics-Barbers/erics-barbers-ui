@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 type Barber = {
@@ -38,6 +39,9 @@ type CreatedBooking = {
   status: string;
   startTime: string;
   endTime: string;
+  customerEmail?: string;
+  customerName?: string;
+  customerPhone?: string;
   barber?: Barber;
   service?: Service;
 };
@@ -85,6 +89,9 @@ export function BookingFlow() {
   const [services, setServices] = useState<Service[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState('');
   const [selectedDate, setSelectedDate] = useState(today);
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(
     null,
   );
@@ -208,6 +215,9 @@ export function BookingFlow() {
         body: JSON.stringify({
           appointmentDate: selectedSlot.startTime,
           barberId: selectedBarberId,
+          customerEmail,
+          customerName,
+          customerPhone,
           serviceId: selectedServiceId,
         }),
       });
@@ -255,6 +265,18 @@ export function BookingFlow() {
                 {createdBooking.service?.name ??
                   selectedService?.name ??
                   'Selected service'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-zinc-500">Customer</dt>
+              <dd className="mt-1 text-base text-zinc-100">
+                {createdBooking.customerName || customerName}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-zinc-500">Email</dt>
+              <dd className="mt-1 text-base text-zinc-100">
+                {createdBooking.customerEmail || customerEmail}
               </dd>
             </div>
             <div>
@@ -423,6 +445,42 @@ export function BookingFlow() {
                 ))}
               </div>
             </section>
+
+            <section className={!selectedServiceId ? 'opacity-50' : undefined}>
+              <h2 className="text-xl font-semibold">4. Contact details</h2>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="block text-sm font-medium text-zinc-300">
+                  Name
+                  <input
+                    className="mt-2 h-11 w-full rounded-lg border border-white/15 bg-black px-3 text-zinc-50 outline-none focus:border-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={!selectedServiceId}
+                    onChange={(event) => setCustomerName(event.target.value)}
+                    type="text"
+                    value={customerName}
+                  />
+                </label>
+                <label className="block text-sm font-medium text-zinc-300">
+                  Email
+                  <input
+                    className="mt-2 h-11 w-full rounded-lg border border-white/15 bg-black px-3 text-zinc-50 outline-none focus:border-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={!selectedServiceId}
+                    onChange={(event) => setCustomerEmail(event.target.value)}
+                    type="email"
+                    value={customerEmail}
+                  />
+                </label>
+                <label className="block text-sm font-medium text-zinc-300 sm:col-span-2">
+                  Phone
+                  <input
+                    className="mt-2 h-11 w-full rounded-lg border border-white/15 bg-black px-3 text-zinc-50 outline-none focus:border-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={!selectedServiceId}
+                    onChange={(event) => setCustomerPhone(event.target.value)}
+                    type="tel"
+                    value={customerPhone}
+                  />
+                </label>
+              </div>
+            </section>
           </div>
         </section>
 
@@ -449,6 +507,12 @@ export function BookingFlow() {
                 {selectedService?.name ?? 'Not selected'}
               </dd>
             </div>
+            <div>
+              <dt className="text-zinc-500">Customer</dt>
+              <dd className="mt-1 text-zinc-100">
+                {customerName || 'Not entered'}
+              </dd>
+            </div>
           </dl>
           <button
             className="mt-6 h-11 w-full rounded-full bg-zinc-50 px-5 text-sm font-medium text-black transition-colors hover:bg-zinc-300 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
@@ -456,6 +520,9 @@ export function BookingFlow() {
               !selectedBarberId ||
               !selectedSlot ||
               !selectedServiceId ||
+              !customerName.trim() ||
+              !customerEmail.trim() ||
+              !customerPhone.trim() ||
               isSubmitting
             }
             onClick={createBooking}
@@ -463,6 +530,16 @@ export function BookingFlow() {
           >
             {isSubmitting ? 'Creating booking' : 'Confirm booking'}
           </button>
+          <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
+            Want to track bookings more easily?{' '}
+            <Link
+              className="font-medium text-zinc-300 underline underline-offset-4 transition-colors hover:text-zinc-50"
+              href="/register"
+            >
+              Create an account
+            </Link>
+            .
+          </p>
         </aside>
       </div>
     </main>

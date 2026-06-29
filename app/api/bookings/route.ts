@@ -10,5 +10,9 @@ export async function POST(req: Request) {
   if (crossSiteResponse) return crossSiteResponse;
 
   const body = await req.json().catch(() => ({}));
-  return forwardApiRequest(req, '/booking', { method: 'POST', body });
+  return forwardApiRequest(req, '/booking', {
+    body,
+    method: 'POST',
+    requireAuth: false,
+  });
 }
