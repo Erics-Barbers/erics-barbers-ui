@@ -90,14 +90,13 @@ function getRouteSurface(request: NextRequest): RouteSurface {
   return isStaffHostname(getHostname(request)) ? 'staff' : 'customer';
 }
 
-function isProtectedRoute(
-  pathname: string,
-  surface: RouteSurface,
-): boolean {
+function isProtectedRoute(pathname: string, surface: RouteSurface): boolean {
   if (surface === 'staff') {
     return (
       pathname === '/' ||
-      staffRoutePrefixes.some((prefix) => pathStartsWithPrefix(pathname, prefix))
+      staffRoutePrefixes.some((prefix) =>
+        pathStartsWithPrefix(pathname, prefix),
+      )
     );
   }
 
@@ -139,6 +138,10 @@ function isPublicCustomerRoute(pathname: string): boolean {
       pathStartsWithPrefix(pathname, prefix),
     )
   );
+}
+
+function isSessionAwarePublicCustomerRoute(pathname: string): boolean {
+  return pathStartsWithPrefix(pathname, '/bookings');
 }
 
 function createCustomerRewriteUrl(request: NextRequest): URL {
@@ -308,7 +311,10 @@ function continueDomainRequest(
     return NextResponse.rewrite(createStaffRewriteUrl(request));
   }
 
-  if (surface === 'customer' && isPublicCustomerRoute(request.nextUrl.pathname)) {
+  if (
+    surface === 'customer' &&
+    isPublicCustomerRoute(request.nextUrl.pathname)
+  ) {
     return NextResponse.rewrite(createCustomerRewriteUrl(request));
   }
 
@@ -411,6 +417,31 @@ export async function proxy(request: NextRequest) {
         getUnauthenticatedLoginTarget(pathname, surface),
         request.nextUrl.pathname,
       );
+    }
+  }
+
+  if (surface === 'customer' && isSessionAwarePublicCustomerRoute(pathname)) {
+    const token = getAccessToken(request);
+
+    if (!token) {
+      const tokens = await refreshAccessToken(request);
+
+      if (tokens) {
+        return continueWithTokens(request, surface, tokens);
+      }
+
+      return continueDomainRequest(request, surface);
+    }
+
+    const payload = decodeJwtPayload(token);
+    if (isExpired(payload?.exp)) {
+      const tokens = await refreshAccessToken(request);
+
+      if (tokens) {
+        return continueWithTokens(request, surface, tokens);
+      }
+
+      return clearAuthCookies(continueDomainRequest(request, surface));
     }
   }
 

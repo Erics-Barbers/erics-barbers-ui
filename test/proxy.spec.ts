@@ -52,8 +52,7 @@ describe('auth proxy', () => {
   const originalFetch = global.fetch;
   const originalApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const originalStaffSiteUrl = process.env.NEXT_PUBLIC_STAFF_SITE_URL;
-  const originalTestStaffSiteUrl =
-    process.env.NEXT_PUBLIC_TEST_STAFF_SITE_URL;
+  const originalTestStaffSiteUrl = process.env.NEXT_PUBLIC_TEST_STAFF_SITE_URL;
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_API_BASE_URL = 'https://api.example.test';
@@ -68,8 +67,7 @@ describe('auth proxy', () => {
     global.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_BASE_URL = originalApiBaseUrl;
     process.env.NEXT_PUBLIC_STAFF_SITE_URL = originalStaffSiteUrl;
-    process.env.NEXT_PUBLIC_TEST_STAFF_SITE_URL =
-      originalTestStaffSiteUrl;
+    process.env.NEXT_PUBLIC_TEST_STAFF_SITE_URL = originalTestStaffSiteUrl;
   });
 
   it('rewrites unauthenticated customer bookings routes without requiring login', async () => {
@@ -79,6 +77,71 @@ describe('auth proxy', () => {
       'https://ui.example.test/customer/bookings',
     );
     expect(mockedFetch).not.toHaveBeenCalled();
+  });
+
+  it('refreshes expired access tokens on public customer bookings routes', async () => {
+    const expiredToken = createJwt({
+      exp: Math.floor(Date.now() / 1000) - 60,
+      tokenType: 'access',
+    });
+
+    mockedFetch.mockResolvedValue(
+      jsonResponse({
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      }),
+    );
+
+    const res = await proxy(
+      createProxyRequest('/bookings/new-booking', {
+        accessToken: expiredToken,
+        refreshToken: 'old-refresh-token',
+      }),
+    );
+
+    expect(res.headers.get('x-middleware-rewrite')).toBe(
+      'https://ui.example.test/customer/bookings/new-booking',
+    );
+    expect(mockedFetch).toHaveBeenCalledWith(
+      'https://api.example.test/auth/refresh',
+      {
+        method: 'POST',
+        headers: {
+          Cookie: 'refreshToken=old-refresh-token',
+        },
+      },
+    );
+    expect(res.headers.get('set-cookie')).toContain(
+      'accessToken=new-access-token',
+    );
+    expect(res.headers.get('set-cookie')).toContain(
+      'refreshToken=new-refresh-token',
+    );
+  });
+
+  it('uses the refresh cookie on public customer bookings routes without an access token', async () => {
+    mockedFetch.mockResolvedValue(
+      jsonResponse({
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      }),
+    );
+
+    const res = await proxy(
+      createProxyRequest('/bookings/new-booking', {
+        refreshToken: 'old-refresh-token',
+      }),
+    );
+
+    expect(res.headers.get('x-middleware-rewrite')).toBe(
+      'https://ui.example.test/customer/bookings/new-booking',
+    );
+    expect(res.headers.get('set-cookie')).toContain(
+      'accessToken=new-access-token',
+    );
+    expect(res.headers.get('set-cookie')).toContain(
+      'refreshToken=new-refresh-token',
+    );
   });
 
   it('refreshes expired access tokens for protected routes', async () => {
