@@ -51,6 +51,13 @@ type CreateBookingResponse = {
   message?: string;
 };
 
+type UserProfile = {
+  id: string;
+  name: string | null;
+  email: string;
+  isEmailVerified: boolean;
+};
+
 type Notice = {
   message: string;
   type: 'error' | 'success';
@@ -117,6 +124,8 @@ export function BookingFlow() {
   const [createdBooking, setCreatedBooking] = useState<CreatedBooking | null>(
     null,
   );
+  const [authProfile, setAuthProfile] = useState<UserProfile | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [accountExistsForEmail, setAccountExistsForEmail] = useState(false);
   const [dismissedAccountPromptEmail, setDismissedAccountPromptEmail] =
@@ -137,6 +146,53 @@ export function BookingFlow() {
     () => services.find((service) => service.id === selectedServiceId),
     [services, selectedServiceId],
   );
+  const isAuthenticated = Boolean(authProfile);
+  const canSubmitBooking =
+    Boolean(selectedBarberId && selectedSlot && selectedServiceId) &&
+    !isCheckingAuth &&
+    (isAuthenticated ||
+      Boolean(
+        customerName.trim() && customerEmail.trim() && customerPhone.trim(),
+      )) &&
+    !isSubmitting;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProfile() {
+      setIsCheckingAuth(true);
+
+      try {
+        const res = await fetch('/api/auth/profile', {
+          method: 'GET',
+          cache: 'no-store',
+        });
+
+        if (res.status === 401) {
+          if (isMounted) setAuthProfile(null);
+          return;
+        }
+
+        const data = await readJson<UserProfile>(res);
+        if (!isMounted) return;
+
+        setAuthProfile(data);
+        setCustomerName(data.name || '');
+        setCustomerEmail(data.email);
+        setAccountExistsForEmail(false);
+      } catch {
+        if (isMounted) setAuthProfile(null);
+      } finally {
+        if (isMounted) setIsCheckingAuth(false);
+      }
+    }
+
+    loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -257,6 +313,8 @@ export function BookingFlow() {
   }, [restoredSlotStartTime, selectedBarberId, selectedDate]);
 
   async function checkAccountForEmail() {
+    if (isAuthenticated) return;
+
     const normalizedEmail = customerEmail.trim().toLowerCase();
 
     setAccountExistsForEmail(false);
@@ -308,17 +366,23 @@ export function BookingFlow() {
     setNotice(null);
 
     try {
+      const body = {
+        appointmentDate: selectedSlot.startTime,
+        barberId: selectedBarberId,
+        serviceId: selectedServiceId,
+        ...(isAuthenticated
+          ? { customerPhone: customerPhone.trim() || undefined }
+          : {
+              customerEmail,
+              customerName,
+              customerPhone,
+            }),
+      };
+
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          appointmentDate: selectedSlot.startTime,
-          barberId: selectedBarberId,
-          customerEmail,
-          customerName,
-          customerPhone,
-          serviceId: selectedServiceId,
-        }),
+        body: JSON.stringify(body),
       });
       const data = await readJson<CreateBookingResponse>(res);
 
@@ -349,6 +413,11 @@ export function BookingFlow() {
             Confirmed
           </p>
           <h1 className="mt-3 text-3xl font-semibold">Booking created</h1>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            {isAuthenticated
+              ? `This booking has been saved to ${authProfile?.email}.`
+              : 'Create an account with this email to see this booking in your account later.'}
+          </p>
           <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
             <div>
               <dt className="text-zinc-500">Barber</dt>
@@ -408,6 +477,35 @@ export function BookingFlow() {
         <section className="rounded-2xl border border-white/15 bg-zinc-950 p-5 sm:p-6">
           <p className="text-sm font-medium uppercase text-zinc-500">Booking</p>
           <h1 className="mt-3 text-3xl font-semibold">Create a booking</h1>
+
+          <div
+            className={
+              isAuthenticated
+                ? 'mt-5 rounded-lg border border-emerald-400/30 bg-emerald-950/30 px-4 py-3'
+                : 'mt-5 rounded-lg border border-white/15 bg-black px-4 py-3'
+            }
+          >
+            {isCheckingAuth ? (
+              <p className="text-sm text-zinc-400">
+                Checking whether you are signed in.
+              </p>
+            ) : isAuthenticated ? (
+              <div>
+                <p className="text-sm font-medium text-emerald-100">
+                  Signed in as {authProfile?.name || authProfile?.email}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-emerald-100/75">
+                  This booking will be attached to your account so you can track
+                  it later.
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-400">
+                You are booking as a guest. You can still sign in before
+                confirming if you want this booking saved to your account.
+              </p>
+            )}
+          </div>
 
           {notice ? (
             <div
@@ -547,12 +645,18 @@ export function BookingFlow() {
 
             <section className={!selectedServiceId ? 'opacity-50' : undefined}>
               <h2 className="text-xl font-semibold">4. Contact details</h2>
+              {isAuthenticated ? (
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  We will use the name and email from your signed-in account.
+                  You can add a phone number for this appointment if needed.
+                </p>
+              ) : null}
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm font-medium text-zinc-300">
                   Name
                   <input
                     className="mt-2 h-11 w-full rounded-lg border border-white/15 bg-black px-3 text-zinc-50 outline-none focus:border-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={!selectedServiceId}
+                    disabled={!selectedServiceId || isAuthenticated}
                     onChange={(event) => setCustomerName(event.target.value)}
                     type="text"
                     value={customerName}
@@ -562,7 +666,7 @@ export function BookingFlow() {
                   Email
                   <input
                     className="mt-2 h-11 w-full rounded-lg border border-white/15 bg-black px-3 text-zinc-50 outline-none focus:border-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={!selectedServiceId}
+                    disabled={!selectedServiceId || isAuthenticated}
                     onChange={(event) => {
                       setCustomerEmail(event.target.value);
                       setAccountExistsForEmail(false);
@@ -588,7 +692,7 @@ export function BookingFlow() {
                   Checking account status.
                 </p>
               ) : null}
-              {accountExistsForEmail ? (
+              {!isAuthenticated && accountExistsForEmail ? (
                 <div className="mt-4 rounded-lg border border-white/15 bg-black px-4 py-3 text-sm text-zinc-300">
                   <p>
                     This email may already have an account. Sign in to save this
@@ -623,6 +727,14 @@ export function BookingFlow() {
 
         <aside className="h-fit rounded-2xl border border-white/15 bg-zinc-950 p-5">
           <h2 className="text-lg font-semibold">Summary</h2>
+          {isAuthenticated ? (
+            <div className="mt-4 rounded-lg border border-emerald-400/30 bg-emerald-950/30 px-3 py-3 text-sm text-emerald-100">
+              <p className="font-medium">Signed-in booking</p>
+              <p className="mt-1 break-words text-xs leading-5 text-emerald-100/75">
+                Saved to {authProfile?.email}
+              </p>
+            </div>
+          ) : null}
           <dl className="mt-5 grid gap-4 text-sm">
             <div>
               <dt className="text-zinc-500">Barber</dt>
@@ -653,30 +765,28 @@ export function BookingFlow() {
           </dl>
           <button
             className="mt-6 h-11 w-full rounded-full bg-zinc-50 px-5 text-sm font-medium text-black transition-colors hover:bg-zinc-300 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
-            disabled={
-              !selectedBarberId ||
-              !selectedSlot ||
-              !selectedServiceId ||
-              !customerName.trim() ||
-              !customerEmail.trim() ||
-              !customerPhone.trim() ||
-              isSubmitting
-            }
+            disabled={!canSubmitBooking}
             onClick={createBooking}
             type="button"
           >
             {isSubmitting ? 'Creating booking' : 'Confirm booking'}
           </button>
-          <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
-            Want to track bookings more easily?{' '}
-            <Link
-              className="font-medium text-zinc-300 underline underline-offset-4 transition-colors hover:text-zinc-50"
-              href="/register"
-            >
-              Create an account
-            </Link>
-            .
-          </p>
+          {isAuthenticated ? (
+            <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
+              You are signed in. This booking will appear in your account.
+            </p>
+          ) : (
+            <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
+              Want to track bookings more easily?{' '}
+              <Link
+                className="font-medium text-zinc-300 underline underline-offset-4 transition-colors hover:text-zinc-50"
+                href="/register"
+              >
+                Create an account
+              </Link>
+              .
+            </p>
+          )}
         </aside>
       </div>
     </main>

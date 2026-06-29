@@ -1,16 +1,35 @@
 import Link from 'next/link';
+import { headers } from 'next/headers';
 
-const appointmentServices = [
-  { name: 'Haircut with Beard Trim', price: 'GBP 20' },
-  { name: 'Haircut with Skin Fade', price: 'GBP 20' },
-  { name: 'Beard Trim', price: 'GBP 10' },
-];
+type Service = {
+  id: string;
+  name: string;
+  description: string;
+  pricePence: number;
+};
 
-const walkInServices = [
-  { name: 'Haircut with Beard Trim', price: 'GBP 20' },
-  { name: 'Haircut with Skin Fade', price: 'GBP 20' },
-  { name: 'Beard Trim', price: 'GBP 10' },
-];
+function formatPrice(pricePence: number) {
+  return new Intl.NumberFormat('en-GB', {
+    currency: 'GBP',
+    style: 'currency',
+  }).format(pricePence / 100);
+}
+
+async function getServices() {
+  const requestHeaders = await headers();
+  const host = requestHeaders.get('host');
+  const protocol = requestHeaders.get('x-forwarded-proto') ?? 'http';
+
+  if (!host) return [];
+
+  const res = await fetch(`${protocol}://${host}/api/services`, {
+    cache: 'no-store',
+  });
+
+  if (!res.ok) return [];
+
+  return (await res.json()) as Service[];
+}
 
 function PriceList({
   description,
@@ -18,7 +37,7 @@ function PriceList({
   title,
 }: {
   description: string;
-  services: Array<{ name: string; price: string }>;
+  services: Service[];
   title: string;
 }) {
   return (
@@ -31,11 +50,16 @@ function PriceList({
         {services.map((service) => (
           <div
             className="flex items-center justify-between gap-4 py-4"
-            key={`${title}-${service.name}`}
+            key={`${title}-${service.id}`}
           >
-            <span className="text-zinc-100">{service.name}</span>
+            <span>
+              <span className="block text-zinc-100">{service.name}</span>
+              <span className="mt-1 block text-sm text-zinc-500">
+                {service.description}
+              </span>
+            </span>
             <span className="shrink-0 rounded-full border border-white/15 px-3 py-1 text-sm font-medium text-zinc-50">
-              {service.price}
+              {formatPrice(service.pricePence)}
             </span>
           </div>
         ))}
@@ -44,7 +68,9 @@ function PriceList({
   );
 }
 
-export default function Services() {
+export default async function Services() {
+  const services = await getServices();
+
   return (
     <main className="flex flex-1 bg-black px-4 py-12 text-zinc-50 sm:px-6 lg:px-24">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
@@ -61,15 +87,21 @@ export default function Services() {
         <div className="grid gap-5 lg:grid-cols-2">
           <PriceList
             description="Best when you want a confirmed time slot."
-            services={appointmentServices}
+            services={services}
             title="Appointments"
           />
           <PriceList
             description="Available around the day's booked appointments."
-            services={walkInServices}
+            services={services}
             title="Walk-ins"
           />
         </div>
+
+        {services.length === 0 ? (
+          <p className="text-sm text-zinc-400">
+            Services are temporarily unavailable.
+          </p>
+        ) : null}
 
         <Link
           className="flex h-12 w-full items-center justify-center rounded-full bg-zinc-50 px-6 text-base font-medium text-black transition-colors hover:bg-zinc-300 sm:w-fit"

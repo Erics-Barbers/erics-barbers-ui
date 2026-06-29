@@ -61,7 +61,7 @@ function EmailVerifyInner() {
     view = {
       title: 'Email verified',
       description:
-        'Your account is ready. You can manage your profile or continue to booking.',
+        'Your account is ready. Any previous bookings made with this email will appear in your account.',
       actions: (
         <div className="mx-auto flex max-w-sm flex-col gap-3">
           <Link
@@ -100,7 +100,11 @@ function EmailVerifyInner() {
   }
 
   return (
-    <AuthPageShell description={view.description} footer={null} title={view.title}>
+    <AuthPageShell
+      description={view.description}
+      footer={null}
+      title={view.title}
+    >
       {view.actions}
     </AuthPageShell>
   );
