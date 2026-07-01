@@ -70,7 +70,65 @@ type Confirmation = {
   type: 'cancelled' | 'updated';
 };
 
-const today = new Date().toISOString().slice(0, 10);
+const SHOP_TIME_ZONE = 'Europe/London';
+const today = toDateInputValue(new Date());
+const earliestBookingDate = addDays(today, 1);
+const latestBookingDate = addCalendarMonths(today, 1);
+
+function toDateInputValue(date: Date) {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: SHOP_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const parts = formatter.formatToParts(date);
+  const partValue = (type: string) =>
+    parts.find((part) => part.type === type)?.value;
+
+  return `${partValue('year')}-${partValue('month')}-${partValue('day')}`;
+}
+
+function addDays(date: string, days: number) {
+  const [year, month, day] = parseDate(date);
+
+  return new Date(Date.UTC(year, month - 1, day + days))
+    .toISOString()
+    .slice(0, 10);
+}
+
+function addCalendarMonths(date: string, monthsToAdd: number) {
+  const [year, month, day] = parseDate(date);
+  const targetMonthIndex = month - 1 + monthsToAdd;
+  const targetYear = year + Math.floor(targetMonthIndex / 12);
+  const normalizedMonthIndex = ((targetMonthIndex % 12) + 12) % 12;
+  const targetMonth = normalizedMonthIndex + 1;
+  const targetDay = Math.min(day, getDaysInMonth(targetYear, targetMonth));
+
+  return [
+    targetYear,
+    String(targetMonth).padStart(2, '0'),
+    String(targetDay).padStart(2, '0'),
+  ].join('-');
+}
+
+function getDaysInMonth(year: number, month: number) {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+function isDateInBookingWindow(date: string) {
+  return date >= earliestBookingDate && date <= latestBookingDate;
+}
+
+function getRescheduleDate(date: string) {
+  const bookingDate = getDateInputValue(date);
+
+  return isDateInBookingWindow(bookingDate) ? bookingDate : earliestBookingDate;
+}
+
+function parseDate(date: string) {
+  return date.split('-').map(Number) as [number, number, number];
+}
 
 function formatPrice(pricePence: number) {
   return new Intl.NumberFormat('en-GB', {
@@ -87,7 +145,7 @@ function formatBookingTime(date: string) {
 }
 
 function getDateInputValue(date: string) {
-  return new Date(date).toISOString().slice(0, 10);
+  return toDateInputValue(new Date(date));
 }
 
 function getStatusLabel(status: string) {
@@ -98,10 +156,18 @@ function isFutureBooking(booking: Booking) {
   return new Date(booking.startTime).getTime() > Date.now();
 }
 
-function canChangeBooking(booking: Booking | null) {
-  return Boolean(
-    booking && booking.status !== 'CANCELLED' && isFutureBooking(booking),
-  );
+function getChangeDisabledReason(booking: Booking | null) {
+  if (!booking) return 'No booking selected.';
+  if (booking.status === 'CANCELLED') {
+    return 'Cancelled bookings cannot be changed online.';
+  }
+  if (!isFutureBooking(booking))
+    return 'Past bookings cannot be changed online.';
+  if (getDateInputValue(booking.startTime) <= today) {
+    return 'Bookings for today must be rescheduled or cancelled by contacting the shop.';
+  }
+
+  return null;
 }
 
 async function readJson<T>(res: Response): Promise<T> {
@@ -135,7 +201,7 @@ export function ManageBookingFlow() {
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [rescheduleBarberId, setRescheduleBarberId] = useState('');
   const [rescheduleServiceId, setRescheduleServiceId] = useState('');
-  const [rescheduleDate, setRescheduleDate] = useState(today);
+  const [rescheduleDate, setRescheduleDate] = useState(earliestBookingDate);
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(
     null,
   );
@@ -147,6 +213,7 @@ export function ManageBookingFlow() {
     () => bookings.find((booking) => booking.id === selectedBookingId) ?? null,
     [bookings, selectedBookingId],
   );
+  const changeDisabledReason = getChangeDisabledReason(selectedBooking);
   const activeBookings = useMemo(
     () =>
       bookings.filter(
@@ -248,7 +315,7 @@ export function ManageBookingFlow() {
     setRescheduleServiceId(
       selectedBooking.serviceId || selectedBooking.service?.id || '',
     );
-    setRescheduleDate(getDateInputValue(selectedBooking.startTime));
+    setRescheduleDate(getRescheduleDate(selectedBooking.startTime));
     setSelectedSlot(null);
     setAvailability(null);
   }, [isRescheduling, selectedBooking]);
@@ -259,6 +326,12 @@ export function ManageBookingFlow() {
     async function loadSlots() {
       if (!isRescheduling || !rescheduleBarberId || !rescheduleDate) {
         setAvailability(null);
+        return;
+      }
+
+      if (!isDateInBookingWindow(rescheduleDate)) {
+        setAvailability(null);
+        setSelectedSlot(null);
         return;
       }
 
@@ -646,7 +719,7 @@ export function ManageBookingFlow() {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <button
                   className="inline-flex h-11 items-center justify-center rounded-full bg-zinc-50 px-5 text-sm font-medium text-black transition-colors hover:bg-zinc-300 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
-                  disabled={!canChangeBooking(selectedBooking)}
+                  disabled={Boolean(changeDisabledReason)}
                   onClick={() => {
                     setShowCancelConfirm(false);
                     setIsRescheduling(true);
@@ -657,7 +730,7 @@ export function ManageBookingFlow() {
                 </button>
                 <button
                   className="inline-flex h-11 items-center justify-center rounded-full border border-red-300/40 px-5 text-sm font-medium text-red-100 transition-colors hover:bg-red-950/40 disabled:cursor-not-allowed disabled:border-white/10 disabled:text-zinc-600"
-                  disabled={!canChangeBooking(selectedBooking)}
+                  disabled={Boolean(changeDisabledReason)}
                   onClick={() => {
                     setIsRescheduling(false);
                     setShowCancelConfirm(true);
@@ -668,9 +741,9 @@ export function ManageBookingFlow() {
                 </button>
               </div>
 
-              {!canChangeBooking(selectedBooking) ? (
+              {changeDisabledReason ? (
                 <p className="mt-4 text-sm text-zinc-500">
-                  This booking cannot be changed online.
+                  {changeDisabledReason}
                 </p>
               ) : null}
 
@@ -706,6 +779,10 @@ export function ManageBookingFlow() {
               {isRescheduling ? (
                 <div className="mt-6 rounded-lg border border-white/15 bg-black p-4">
                   <h3 className="text-lg font-semibold">Reschedule booking</h3>
+                  <p className="mt-2 text-sm leading-6 text-zinc-400">
+                    Online reschedules are available from tomorrow up to one
+                    month ahead.
+                  </p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     <label className="block text-sm font-medium text-zinc-300">
                       Barber
@@ -728,7 +805,8 @@ export function ManageBookingFlow() {
                       Date
                       <input
                         className="mt-2 h-11 w-full rounded-lg border border-white/15 bg-black px-3 text-zinc-50 outline-none focus:border-zinc-50"
-                        min={today}
+                        max={latestBookingDate}
+                        min={earliestBookingDate}
                         onChange={(event) =>
                           setRescheduleDate(event.target.value)
                         }
@@ -800,6 +878,7 @@ export function ManageBookingFlow() {
                       disabled={
                         !rescheduleBarberId ||
                         !rescheduleServiceId ||
+                        !isDateInBookingWindow(rescheduleDate) ||
                         !selectedSlot ||
                         isUpdating
                       }
@@ -895,6 +974,14 @@ function BookingDetailRows({ booking }: { booking: Booking }) {
         <dt className="text-zinc-500">Service</dt>
         <dd className="mt-1 text-base text-zinc-100">
           {booking.service?.name ?? 'Selected service'}
+        </dd>
+      </div>
+      <div>
+        <dt className="text-zinc-500">Price</dt>
+        <dd className="mt-1 text-base text-zinc-100">
+          {booking.service?.pricePence != null
+            ? formatPrice(booking.service.pricePence)
+            : 'Selected price'}
         </dd>
       </div>
       <div>
