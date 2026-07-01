@@ -757,6 +757,14 @@ export function BookingFlow() {
               </dd>
             </div>
             <div>
+              <dt className="text-zinc-500">Price</dt>
+              <dd className="mt-1 text-zinc-100">
+                {selectedService
+                  ? formatPrice(selectedService.pricePence)
+                  : 'Not selected'}
+              </dd>
+            </div>
+            <div>
               <dt className="text-zinc-500">Customer</dt>
               <dd className="mt-1 text-zinc-100">
                 {customerName || 'Not entered'}
