@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import Navbar from './components/navbar';
 import Footer from './components/footer';
+import Providers from './providers';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -24,8 +25,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Eric's Barbers",
-    description:
-      "Fresh cuts in Luton. Book your next trim at Eric's Barbers.",
+    description: "Fresh cuts in Luton. Book your next trim at Eric's Barbers.",
     url: '/',
     siteName: "Eric's Barbers",
     locale: 'en_GB',
@@ -43,9 +43,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-white text-black dark:bg-black dark:text-white flex flex-col`}
       >
-        <Navbar />
-        {children}
-        <Footer />
+        <Providers>
+          <Navbar />
+          {children}
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
