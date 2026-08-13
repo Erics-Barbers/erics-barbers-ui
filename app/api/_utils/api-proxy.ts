@@ -9,6 +9,7 @@ type RefreshResult = {
 
 type ForwardOptions = {
   body?: unknown;
+  headers?: Record<string, string>;
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   requireAuth?: boolean;
 };
@@ -97,7 +98,7 @@ async function callApi(
   accessToken: string | undefined,
   options: ForwardOptions,
 ) {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...options.headers };
 
   if (accessToken) {
     headers.Authorization = `Bearer ${accessToken}`;

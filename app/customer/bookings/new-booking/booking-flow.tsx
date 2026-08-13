@@ -174,6 +174,7 @@ export function BookingFlow() {
     null,
   );
   const [selectedServiceId, setSelectedServiceId] = useState('');
+  const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(
     null,
   );
@@ -250,6 +251,17 @@ export function BookingFlow() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    setIdempotencyKey(null);
+  }, [
+    customerEmail,
+    customerName,
+    customerPhone,
+    selectedBarberId,
+    selectedServiceId,
+    selectedSlot?.startTime,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -442,9 +454,15 @@ export function BookingFlow() {
             }),
       };
 
+      const submissionKey = idempotencyKey ?? crypto.randomUUID();
+      setIdempotencyKey(submissionKey);
+
       const res = await fetch('/api/bookings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': submissionKey,
+        },
         body: JSON.stringify(body),
       });
       const data = await readJson<CreateBookingResponse>(res);
