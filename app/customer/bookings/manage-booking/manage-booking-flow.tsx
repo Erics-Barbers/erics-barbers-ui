@@ -2,6 +2,15 @@
 
 import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { formatPrice } from '../../_lib/customer-utils';
+import {
+  addCalendarMonths,
+  addDays,
+  formatBookingTime,
+  getDateInputValue,
+  isDateInBookingWindow as isBookingDateInWindow,
+  toDateInputValue,
+} from '../_lib/date-utils';
 
 type Barber = {
   id: string;
@@ -70,82 +79,18 @@ type Confirmation = {
   type: 'cancelled' | 'updated';
 };
 
-const SHOP_TIME_ZONE = 'Europe/London';
 const today = toDateInputValue(new Date());
 const earliestBookingDate = addDays(today, 1);
 const latestBookingDate = addCalendarMonths(today, 1);
 
-function toDateInputValue(date: Date) {
-  const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: SHOP_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-  const parts = formatter.formatToParts(date);
-  const partValue = (type: string) =>
-    parts.find((part) => part.type === type)?.value;
-
-  return `${partValue('year')}-${partValue('month')}-${partValue('day')}`;
-}
-
-function addDays(date: string, days: number) {
-  const [year, month, day] = parseDate(date);
-
-  return new Date(Date.UTC(year, month - 1, day + days))
-    .toISOString()
-    .slice(0, 10);
-}
-
-function addCalendarMonths(date: string, monthsToAdd: number) {
-  const [year, month, day] = parseDate(date);
-  const targetMonthIndex = month - 1 + monthsToAdd;
-  const targetYear = year + Math.floor(targetMonthIndex / 12);
-  const normalizedMonthIndex = ((targetMonthIndex % 12) + 12) % 12;
-  const targetMonth = normalizedMonthIndex + 1;
-  const targetDay = Math.min(day, getDaysInMonth(targetYear, targetMonth));
-
-  return [
-    targetYear,
-    String(targetMonth).padStart(2, '0'),
-    String(targetDay).padStart(2, '0'),
-  ].join('-');
-}
-
-function getDaysInMonth(year: number, month: number) {
-  return new Date(Date.UTC(year, month, 0)).getUTCDate();
-}
-
 function isDateInBookingWindow(date: string) {
-  return date >= earliestBookingDate && date <= latestBookingDate;
+  return isBookingDateInWindow(date, earliestBookingDate, latestBookingDate);
 }
 
 function getRescheduleDate(date: string) {
   const bookingDate = getDateInputValue(date);
 
   return isDateInBookingWindow(bookingDate) ? bookingDate : earliestBookingDate;
-}
-
-function parseDate(date: string) {
-  return date.split('-').map(Number) as [number, number, number];
-}
-
-function formatPrice(pricePence: number) {
-  return new Intl.NumberFormat('en-GB', {
-    currency: 'GBP',
-    style: 'currency',
-  }).format(pricePence / 100);
-}
-
-function formatBookingTime(date: string) {
-  return new Intl.DateTimeFormat('en-GB', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(date));
-}
-
-function getDateInputValue(date: string) {
-  return toDateInputValue(new Date(date));
 }
 
 function getStatusLabel(status: string) {

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { headers } from 'next/headers';
+import { formatPrice } from '../_lib/customer-utils';
 
 type Service = {
   id: string;
@@ -7,13 +8,6 @@ type Service = {
   description: string;
   pricePence: number;
 };
-
-function formatPrice(pricePence: number) {
-  return new Intl.NumberFormat('en-GB', {
-    currency: 'GBP',
-    style: 'currency',
-  }).format(pricePence / 100);
-}
 
 async function getServices() {
   const requestHeaders = await headers();
