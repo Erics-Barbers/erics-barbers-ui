@@ -10,8 +10,18 @@ export async function POST(req: Request) {
   if (crossSiteResponse) return crossSiteResponse;
 
   const body = await req.json().catch(() => ({}));
+  const idempotencyKey = req.headers.get('idempotency-key');
+
+  if (!idempotencyKey) {
+    return Response.json(
+      { message: 'Idempotency-Key header is required' },
+      { status: 400 },
+    );
+  }
+
   return forwardApiRequest(req, '/booking', {
     body,
+    headers: { 'Idempotency-Key': idempotencyKey },
     method: 'POST',
     requireAuth: false,
   });

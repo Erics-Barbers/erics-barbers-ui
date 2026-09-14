@@ -1,104 +1,68 @@
-# Barber's Booking and Auth UI
+# Eric's Barbers Web App
 
-This project is a modern single-page application (SPA) for managing barber shop bookings and user authentication, built with the Next.js framework. It provides a seamless experience for users to register, log in, and book appointments, with a focus on clean UI/UX and robust authentication flows.
+The Next.js customer, staff, and administration web client for Eric's Barbers. The application uses host-aware routing and a browser backend-for-frontend (BFF) for authentication.
 
----
+This repository remains the production web experience alongside the separate React Native customer app. Responsive web support does not make this repository the mobile application's codebase.
 
-## Table of Contents
-- [Overview](#overview)
-- [Technologies Used](#technologies-used)
-- [Features](#features)
-- [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
+## Current capabilities
 
----
+- customer registration, email verification, login, email MFA, password recovery, profile, and logout
+- HttpOnly access/refresh cookie handling through Next.js route handlers
+- public services, barbers, availability, guest booking, and booking-management foundations
+- authenticated customer booking-management foundations
+- staff interface foundations, with some operational workflows still backed by sample/static data
+- generated OpenAPI client and model types
 
-## Overview
-This application allows users to:
-- Register and verify their email address
-- Log in using email and password
-- Book, view, and manage appointments with barbers
-- Browse available barbers and services
+## Technology
 
-The UI is designed for clarity and ease of use, following the wireframe provided in `wireframe.excalidraw` (see [UI/UX Wireframe](#uiux-wireframe)).
+- Next.js 16 and React 19
+- TypeScript
+- Material UI and Tailwind CSS
+- Jest and Testing Library
+- OpenAPI-generated API code
 
-## Technologies Used
-- **Next.js** – React framework for server-side rendering and routing
-- **React.js** – Component-based UI library
-- **Material UI** – Component library for fast, accessible design
-- **Tailwind CSS** – Utility-first CSS framework for rapid styling
+## Architecture boundary
 
-## Features
-- **User Registration**: Sign up with email verification
-- **Authentication**: Login via email/password with HttpOnly cookie sessions managed by Next.js route handlers
-- **Booking System**: Create, update, and manage appointments
-- **Barber & Service Listings**: View available barbers and services
-- **Responsive Design**: Mobile-friendly and accessible UI
+Browser authentication calls local Next.js routes under `/api/auth/*`. Those route handlers communicate with NestJS and own browser HttpOnly cookies, refresh retries, same-origin checks, and logout cleanup. Browser auth code must not bypass this boundary by calling NestJS auth endpoints directly.
 
-## Getting Started
+The React Native app has a separate native authentication contract and communicates directly with NestJS. Business rules remain shared and are enforced by the API.
 
-### Prerequisites
-- Node.js (v18 or higher recommended)
-- npm or yarn
+## Prerequisites
 
-### Installation
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/your-username/erics-barbers-ui.git
-   cd erics-barbers-ui
-   ```
-2. Install dependencies:
-   ```sh
-   npm install
-   # or
-   yarn install
-   ```
-3. (Optional) Configure environment variables as needed.
+- Node.js 22
+- npm
+- a running Eric's Barbers API for integrated flows
 
-### Running the App
-Start the development server:
-```sh
+## Install and run
+
+```bash
+npm install
 npm run dev
-# or
-yarn dev
-```
-The app will be available at [http://localhost:3000](http://localhost:3000).
-
-## Project Structure
-
-```
-├── api/                # API client, models, and services
-│   ├── generated/      # OpenAPI-generated client code
-│   └── repositories/   # Data access and repository logic
-├── app/                # Next.js app directory (pages, components, routes)
-│   ├── components/     # Shared UI components (navbar, footer, etc.)
-│   ├── booking/        # Booking-related pages
-│   ├── login/          # Login forms and pages
-│   ├── register/       # Registration forms and pages
-│   └── ...             # Other feature folders
-├── public/             # Static assets (if any)
-├── config.json         # App configuration
-├── README.md           # Project documentation
-└── ...
 ```
 
-## Usage
-- Register a new account and verify your email
-- Log in using your email and password
-- Browse barbers and available services
-- Book, update, or cancel appointments
+The local customer site is normally available at [http://localhost:3000](http://localhost:3000).
 
-## Authentication Notes
-See [docs/authentication.md](docs/authentication.md) for the current BFF auth flow, protected route proxy behavior, cookie handling, generated client guidance, and auth tests.
+## Important commands
 
-## UI/UX Wireframe
-The `wireframe.excalidraw` file at the root of this project contains the UI/UX design. Open it at [excalidraw.com](https://excalidraw.com/) to view the application's wireframe.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the Next.js development server. |
+| `npm run build` | Regenerate the API client and build the application. |
+| `npm run lint` | Run ESLint. |
+| `npm run test` | Run the test suite. |
+| `npm run generate:api-client` | Generate client code from `api/api-spec.json`. |
 
-## Contributing
-Contributions are welcome! Please open issues or submit pull requests for improvements and bug fixes.
+The canonical contract belongs to the API repository at `openapi/openapi.json`. The web copy must be synchronized from that artifact rather than edited independently.
 
-## License
-This project is licensed under the MIT License.
+## Structure
+
+```text
+app/                 routes, UI, and Next.js BFF route handlers
+api/api-spec.json    synchronized copy of the API-owned OpenAPI contract
+api/generated/       generated API client
+api/repositories/    web data-access wrappers
+test/                focused web and BFF tests
+proxy.ts             host routing, route protection, and refresh behavior
+```
+
+See [authentication notes](docs/authentication.md) for the implemented browser flow and the central [architecture documentation](https://github.com/Erics-Barbers/erics-barbers-docs) for shared requirements, roadmaps, and ADRs.
