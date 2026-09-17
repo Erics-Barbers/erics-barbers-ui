@@ -32,4 +32,5 @@ export default withSentryConfig(nextConfig, {
   sourcemaps: {
     disable: !process.env.SENTRY_AUTH_TOKEN,
   },
+  widenClientFileUpload: true,
 });
