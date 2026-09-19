@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { POST as login } from '../app/api/auth/login/route';
+import { DELETE as deleteAccount } from '../app/api/auth/account/route';
 import { POST as logout } from '../app/api/auth/logout/route';
 import { POST as requestPasswordReset } from '../app/api/auth/reset-password-email/route';
 import { POST as resetPassword } from '../app/api/auth/reset-password/route';
@@ -469,78 +470,94 @@ describe('auth route handlers', () => {
     );
   });
 
-  it('requests a staff password reset email through the BFF', async () => {
+  it('deletes an account through the BFF and clears auth cookies', async () => {
+    mockedCookies.mockResolvedValue(
+      createCookieStore({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      }) as never,
+    );
     mockedFetch.mockResolvedValue(
-      jsonResponse({
-        message: 'Password reset link sent to email if it exists',
-      }),
+      jsonResponse({ message: 'Account deleted successfully' }),
     );
 
-    const res = await requestPasswordReset(
-      new Request('https://staff.example.test/api/auth/reset-password-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Origin: 'https://staff.example.test',
-        },
-        body: JSON.stringify({
-          email: 'barber@example.com',
-          surface: 'STAFF',
-        }),
+    const res = await deleteAccount(
+      new Request('https://ui.example.test/api/auth/account', {
+        method: 'DELETE',
+        headers: { Origin: 'https://ui.example.test' },
       }),
     );
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({
-      message: 'Password reset link sent to email if it exists',
+      message: 'Account deleted successfully',
     });
     expect(mockedFetch).toHaveBeenCalledWith(
-      'https://api.example.test/auth/reset-password-email',
+      'https://api.example.test/auth/account',
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: 'barber@example.com',
-          surface: 'STAFF',
-        }),
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer access-token' },
       },
     );
+    const setCookie = res.headers.get('set-cookie');
+    expect(setCookie).toContain('accessToken=');
+    expect(setCookie).toContain('refreshToken=');
+    expect(setCookie).toContain('Max-Age=0');
   });
 
-  it('forwards password reset submissions through the BFF', async () => {
-    mockedFetch.mockResolvedValue(
-      jsonResponse({ message: 'Password reset successfully' }),
+  it('refreshes and retries account deletion when the access token is rejected', async () => {
+    mockedCookies.mockResolvedValue(
+      createCookieStore({
+        accessToken: 'old-access-token',
+        refreshToken: 'old-refresh-token',
+      }) as never,
     );
-
-    const res = await resetPassword(
-      new Request('https://ui.example.test/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Origin: 'https://ui.example.test',
-        },
-        body: JSON.stringify({
-          token: 'password-reset-token',
-          newPassword: 'NewPassword1',
+    mockedFetch
+      .mockResolvedValueOnce(
+        jsonResponse({ message: 'expired' }, { status: 401 }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          accessToken: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+          refreshMaxAgeSeconds: 43_200,
         }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ message: 'Account deleted successfully' }),
+      );
+
+    const res = await deleteAccount(
+      new Request('https://ui.example.test/api/auth/account', {
+        method: 'DELETE',
+        headers: {
+          Origin: 'https://ui.example.test',
+          'User-Agent': 'jest-agent',
+        },
       }),
     );
 
     expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({
-      message: 'Password reset successfully',
-    });
-    expect(mockedFetch).toHaveBeenCalledWith(
-      'https://api.example.test/auth/reset-password',
+    expect(mockedFetch).toHaveBeenNthCalledWith(
+      2,
+      'https://api.example.test/auth/refresh',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: 'password-reset-token',
-          newPassword: 'NewPassword1',
-        }),
+        headers: {
+          Cookie: 'refreshToken=old-refresh-token',
+          'User-Agent': 'jest-agent',
+        },
       },
     );
+    expect(mockedFetch).toHaveBeenNthCalledWith(
+      3,
+      'https://api.example.test/auth/account',
+      {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer new-access-token' },
+      },
+    );
+    expect(res.headers.get('set-cookie')).toContain('Max-Age=0');
   });
 
   it('returns a stable code when login fails because email is unverified', async () => {
@@ -568,6 +585,56 @@ describe('auth route handlers', () => {
       message: 'Email not verified',
       code: 'EMAIL_NOT_VERIFIED',
     });
+  });
+
+  it('forwards rememberMe and uses the API refresh lifetime on successful login', async () => {
+    const cookieStore = createCookieStore();
+    mockedCookies.mockResolvedValue(cookieStore as never);
+    mockedFetch.mockResolvedValue(
+      jsonResponse({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        refreshMaxAgeSeconds: 43_200,
+      }),
+    );
+
+    const res = await login(
+      new Request('https://ui.example.test/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: 'https://ui.example.test',
+        },
+        body: JSON.stringify({
+          email: 'user@example.com',
+          password: 'Password1',
+          rememberMe: false,
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ message: 'Logged in' });
+    expect(mockedFetch).toHaveBeenCalledWith(
+      'https://api.example.test/auth/login',
+      expect.objectContaining({
+        body: JSON.stringify({
+          email: 'user@example.com',
+          password: 'Password1',
+          rememberMe: false,
+        }),
+      }),
+    );
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      'accessToken',
+      'access-token',
+      expect.objectContaining({ maxAge: 60 * 15 }),
+    );
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      'refreshToken',
+      'refresh-token',
+      expect.objectContaining({ maxAge: 43_200 }),
+    );
   });
 
   it('returns MFA_REQUIRED without setting cookies when login requires MFA', async () => {
@@ -619,7 +686,7 @@ describe('auth route handlers', () => {
       jsonResponse({
         accessToken,
         refreshToken: 'refresh-token',
-        refreshMaxAgeSeconds: 604_800,
+        refreshMaxAgeSeconds: 43_200,
       }),
     );
 
@@ -651,7 +718,7 @@ describe('auth route handlers', () => {
     expect(cookieStore.set).toHaveBeenCalledWith(
       'refreshToken',
       'refresh-token',
-      expect.objectContaining({ maxAge: 604_800 }),
+      expect.objectContaining({ maxAge: 43_200 }),
     );
   });
 

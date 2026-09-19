@@ -10,7 +10,7 @@ type AuthErrorResponse = {
 type LoginResponseBody = {
   accessToken: string;
   refreshToken: string;
-  refreshMaxAgeSeconds: number;
+  refreshMaxAgeSeconds?: number;
 };
 
 type LoginMfaRequiredResponseBody = {
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     secure,
     sameSite: 'lax',
     path: '/',
-    maxAge: data.refreshMaxAgeSeconds,
+    maxAge: data.refreshMaxAgeSeconds ?? 60 * 60 * 24 * 7,
   });
 
   return NextResponse.json(createLoginSuccessBody(data.accessToken, req), {

@@ -6,7 +6,7 @@ import { createLoginSuccessBody } from '../_utils/access-token-redirect';
 type VerifyMfaResponse = {
   accessToken: string;
   refreshToken: string;
-  refreshMaxAgeSeconds: number;
+  refreshMaxAgeSeconds?: number;
 };
 
 export async function POST(req: Request) {
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     secure,
     sameSite: 'lax',
     path: '/',
-    maxAge: data.refreshMaxAgeSeconds,
+    maxAge: data.refreshMaxAgeSeconds ?? 60 * 60 * 24 * 7,
   });
 
   return NextResponse.json(createLoginSuccessBody(data.accessToken, req), {

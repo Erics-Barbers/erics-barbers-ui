@@ -65,6 +65,10 @@ export default function VerifyEmail() {
           Did not receive it? Check your spam folder or resend the verification
           email.
         </p>
+        <p className="mt-3 text-sm leading-6 text-zinc-500">
+          After verifying your email, any previous bookings made with this email
+          will appear in your account.
+        </p>
         <div className="mx-auto mt-6 max-w-sm">
           <Button
             disabled={isRunning || !email}

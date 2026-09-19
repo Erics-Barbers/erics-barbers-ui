@@ -23,9 +23,15 @@ export class BookingRepository {
     }
   }
 
-  public async createBooking(bookingData: CreateBookingDto) {
+  public async createBooking(
+    idempotencyKey: string,
+    bookingData: CreateBookingDto,
+  ) {
     try {
-      return await BookingService.bookingControllerCreateBooking(bookingData);
+      return await BookingService.bookingControllerCreateBooking(
+        idempotencyKey,
+        bookingData,
+      );
     } catch (error) {
       console.log('Create booking error:', error);
       throw error;
