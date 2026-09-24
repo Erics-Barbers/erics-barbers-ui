@@ -1,6 +1,11 @@
 import Link from 'next/link';
 import LoginFlow from '@/app/components/auth/login-flow';
 
+type MfaChallenge = {
+  challengeId: string;
+  method: string;
+};
+
 const DEFAULT_LOGIN_ERROR =
   'We could not sign you in with those details. Check your email and password, or reset your password if you are unsure.';
 const RATE_LIMIT_LOGIN_ERROR =
