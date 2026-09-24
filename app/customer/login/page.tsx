@@ -1,5 +1,23 @@
+'use client';
+
 import Link from 'next/link';
-import LoginFlow from '@/app/components/auth/login-flow';
+import AuthTextField from '@/app/components/auth/auth-text-field';
+import AuthSubmitButton from '@/app/components/auth/auth-submit-button';
+import LoginForm from '@/app/components/auth/login-form';
+import AuthPageShell from '@/app/components/auth/auth-page-shell';
+import Notification from '@/app/components/notification';
+import { useRouter } from 'next/navigation';
+import React from 'react';
+
+type LoginErrorResponse = {
+  code?: string;
+};
+
+type LoginMfaRequiredResponse = {
+  code?: string;
+  challengeId?: string;
+  mfaMethod?: string;
+};
 
 type MfaChallenge = {
   challengeId: string;
@@ -182,6 +200,7 @@ export default function Login() {
         ) : (
           <LoginForm
             errorMessage={errorMessage}
+            forgotPasswordHref="/forgot-password"
             submitting={submitting}
             onLogin={loginUser}
           />

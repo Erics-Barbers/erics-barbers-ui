@@ -2,10 +2,12 @@ import AuthSubmitButton from '@/app/components/auth/auth-submit-button';
 import AuthTextField from '@/app/components/auth/auth-text-field';
 import { Checkbox, FormControlLabel } from '@mui/material';
 import Form from 'next/form';
+import Link from 'next/link';
 import React from 'react';
 
 interface LoginFormProps {
   errorMessage?: string | null;
+  forgotPasswordHref: string;
   onLogin: (email: string, password: string, rememberMe: boolean) => void;
   submitting?: boolean;
 }
@@ -69,6 +71,12 @@ export default function LoginForm(props: LoginFormProps) {
         }}
       />
       <AuthSubmitButton loading={props.submitting}>Log in</AuthSubmitButton>
+      <Link
+        className="self-start text-sm text-zinc-300 underline underline-offset-4"
+        href={props.forgotPasswordHref}
+      >
+        Forgot password?
+      </Link>
     </Form>
   );
 }
